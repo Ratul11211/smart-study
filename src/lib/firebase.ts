@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { initializeAuth, indexedDBLocalPersistence, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAeQ1HK7-TMua64Pe9oF8rtJ81E77jwNQg",
@@ -26,7 +26,12 @@ if (typeof window !== "undefined") {
 }
 
 const storage = getStorage(app);
-const auth = getAuth(app);
+// Use indexedDBLocalPersistence to fix Google Sign-In on Android Capacitor WebView.
+// The default sessionStorage is NOT shared between the WebView and Chrome Custom Tabs,
+// which causes the "missing initial state" error on Android.
+const auth = initializeAuth(app, {
+  persistence: indexedDBLocalPersistence
+});
 const googleProvider = new GoogleAuthProvider();
 // We need this scope to create and manage backup files in Google Drive
 googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
