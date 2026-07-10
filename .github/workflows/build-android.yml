@@ -1,0 +1,66 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Build Next.js App
+      run: npm run build
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Sync Capacitor
+      run: npx cap sync android
+
+    - name: Generate or Check Keystore
+      run: |
+        cd android/app
+        if [ ! -f "smartstudy.jks" ]; then
+          echo "Keystore not found. Generating a new one..."
+          keytool -genkey -v -keystore smartstudy.jks -keyalg RSA -keysize 2048 -validity 10000 -alias smartstudy -dname "CN=Smart Study, OU=App, O=Smart Study, C=US" -storepass 123456 -keypass 123456
+          echo "----------------------------------------"
+          echo "NEW SHA-1 FINGERPRINT FOR FIREBASE:"
+          keytool -list -v -keystore smartstudy.jks -alias smartstudy -storepass 123456 -keypass 123456 | grep SHA1
+          echo "----------------------------------------"
+        else
+          echo "Keystore exists. Using existing keystore."
+          echo "----------------------------------------"
+          echo "EXISTING SHA-1 FINGERPRINT:"
+          keytool -list -v -keystore smartstudy.jks -alias smartstudy -storepass 123456 -keypass 123456 | grep SHA1
+          echo "----------------------------------------"
+        fi
+
+    - name: Build APK
+      run: |
+        cd android
+        chmod +x gradlew
+        ./gradlew assembleDebug
+
+    - name: Upload APK and Keystore
+      uses: actions/upload-artifact@v3
+      with:
+        name: smart-study-app-and-keystore
+        path: |
+          android/app/build/outputs/apk/debug/app-debug.apk
+          android/app/smartstudy.jks
