@@ -2,14 +2,8 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Capacitor } from '@capacitor/core';
-import * as pdfjsLib from 'pdfjs-dist';
 import { db } from '@/lib/firebase';
-import { collection, doc, addDoc } from 'firebase/firestore';
-
-// Configure PDF.js worker
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-}
+import { collection, addDoc } from 'firebase/firestore';
 
 function PdfReaderContent() {
   const searchParams = useSearchParams();
@@ -31,6 +25,8 @@ function PdfReaderContent() {
     
     const loadPdf = async () => {
       try {
+        const pdfjsLib = await import('pdfjs-dist');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
         const loadingTask = pdfjsLib.getDocument({ url });
         const pdf = await loadingTask.promise;
         setPdfDoc(pdf);
