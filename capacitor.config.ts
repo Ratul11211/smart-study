@@ -6,6 +6,12 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     allowNavigation: ['smart-study-6fee3.firebaseapp.com', 'accounts.google.com']
+  },
+  plugins: {
+    FirebaseAuthentication: {
+      skipNativeAuth: false,
+      providers: ['google.com'],
+    },
   }
 };
 
