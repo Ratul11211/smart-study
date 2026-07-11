@@ -2,8 +2,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Capacitor } from '@capacitor/core';
-import { db } from '@/lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { generateId, saveProject, savePageWithImage } from '@/lib/localDB';
 
 function PdfReaderContent() {
   const searchParams = useSearchParams();
@@ -78,12 +77,14 @@ function PdfReaderContent() {
     const title = prompt("Enter a name for this project:");
     if (!title) return;
     
-    const subjectId = prompt("Enter Subject ID (leave empty if none):") || "";
+    const subject = prompt("Enter Subject (e.g., Math, English):") || "General";
+    const bookClass = prompt("Enter Class (e.g., SSC, HSC, Class 9):") || "General";
     
     setIsProcessing(true);
     
     try {
-      const pagesData = [];
+      const projectId = generateId();
+      let coverImageUrl = '';
       
       // Process all pages
       for (let i = 1; i <= pdfDoc.numPages; i++) {
@@ -101,35 +102,40 @@ function PdfReaderContent() {
         
         const compressedBase64 = compressToTargetSize(canvas);
         
-        pagesData.push({
-          id: 'page-' + Date.now() + '-' + i,
-          imageUrl: compressedBase64,
+        const savedPage = await savePageWithImage(projectId, {
+          id: generateId(),
           pageNum: i,
-          category: 'BOOK',
-          createdAt: new Date().toISOString()
+          imageUrl: compressedBase64,
+          status: 'pending',
+          category: 'PDF'
         });
+        
+        if (i === 1) {
+          coverImageUrl = savedPage.imageUrl;
+        }
       }
       
-      // Save to Firebase
+      // Save to localDB
       const projectData = {
-        title,
-        description: "Created from PDF",
-        subjectId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        pageCount: pagesData.length,
-        pages: pagesData,
-        settings: {
-          testIntervals: [1, 3, 7, 14, 30],
-          isArchived: false,
-        }
+        id: projectId,
+        name: title,
+        category: 'PDF',
+        bookClass,
+        bookType: 'PDF',
+        version: 'Default',
+        subject,
+        coverImageUrl,
+        srsIntervals: [1, 3, 7, 14, 30],
+        maxUnlockedPage: 0,
+        readings: [],
+        createdAt: new Date().toISOString()
       };
       
-      const docRef = await addDoc(collection(db, 'projects'), projectData);
+      await saveProject(projectData);
       
       setIsProcessing(false);
       alert("Project created successfully!");
-      router.push('/project/' + docRef.id);
+      router.push('/project/' + projectId);
       
     } catch (err) {
       console.error(err);
