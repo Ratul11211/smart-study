@@ -1072,8 +1072,8 @@ function ProjectContent() {
   if (!projectData || !id) return <div style={{ padding: '4rem', textAlign: 'center' }}>Project not found.</div>;
 
   return (
-    <div className="container fade-in" style={{ paddingTop: '2rem', paddingBottom: '3rem' }}>
-      <div className="flex-responsive" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--background)', padding: '1rem 0', marginBottom: '1rem', justifyContent: 'space-between' }}>
+    <div className="container fade-in" style={{ paddingTop: showManagement ? '2rem' : '0.5rem', paddingBottom: showManagement ? '3rem' : '0.5rem', maxWidth: showManagement ? undefined : '100%' }}>
+      <div className="flex-responsive" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--background)', padding: showManagement ? '1rem 0' : '0.2rem 0', marginBottom: showManagement ? '1rem' : '0.2rem', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
           {mode ? (
             <button 

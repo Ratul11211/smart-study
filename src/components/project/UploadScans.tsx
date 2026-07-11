@@ -2,6 +2,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { collection, doc, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { processImageToHighQualityWebP } from '@/lib/imageProcessor';
 import { PageData } from '@/types/project';
 
 const UploadScans = ({ projectId, pages, onUploadComplete }: { projectId: string, pages: PageData[], onUploadComplete: ()=>void }) => {
@@ -18,32 +19,7 @@ const UploadScans = ({ projectId, pages, onUploadComplete }: { projectId: string
     setStartPageNum(boiPages.length > 0 ? Math.max(...boiPages.map(p=>p.pageNum)) + 1 : 1);
   }, [pages]);
 
-  const compressToTargetSize = (canvas: HTMLCanvasElement, targetKB: number = 150): string => {
-    const grayCanvas = document.createElement('canvas');
-    grayCanvas.width = canvas.width;
-    grayCanvas.height = canvas.height;
-    const ctx = grayCanvas.getContext('2d');
-    if (ctx) {
-      ctx.filter = 'grayscale(100%)';
-      ctx.drawImage(canvas, 0, 0);
-    }
-    const finalCanvas = ctx ? grayCanvas : canvas;
-
-    let quality = 0.85;
-    let dataUrl = finalCanvas.toDataURL('image/webp', quality);
-    let sizeKB = (dataUrl.length * 0.75) / 1024;
-    
-    while (sizeKB > targetKB && quality > 0.5) {
-      quality -= 0.05;
-      dataUrl = finalCanvas.toDataURL('image/webp', quality);
-      sizeKB = (dataUrl.length * 0.75) / 1024;
-    }
-    
-    grayCanvas.width = 0;
-    grayCanvas.height = 0;
-    
-    return dataUrl;
-  };
+  // Image processing logic is now in lib/imageProcessor
 
   const processPDF = async (file: File) => {
     setIsProcessing(true);
@@ -57,9 +33,7 @@ const UploadScans = ({ projectId, pages, onUploadComplete }: { projectId: string
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        let viewport = page.getViewport({ scale: 1.0 });
-        let scale = 1800 / viewport.width;
-        viewport = page.getViewport({ scale });
+        let viewport = page.getViewport({ scale: 2.0 }); // High base scale
         
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -68,7 +42,7 @@ const UploadScans = ({ projectId, pages, onUploadComplete }: { projectId: string
 
         if(context) {
           await page.render({ canvasContext: context, viewport } as any).promise;
-          const dataUrl = compressToTargetSize(canvas, 150);
+          const dataUrl = await processImageToHighQualityWebP(canvas);
           newPages.push({ id: `page-${Date.now()}-${i}`, pageNum: i, imageUrl: dataUrl, status: 'pending' });
           
           canvas.width = 0;
@@ -107,13 +81,15 @@ const UploadScans = ({ projectId, pages, onUploadComplete }: { projectId: string
           canvas.height = height;
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = compressToTargetSize(canvas, 150);
-            setExtractedPages(prev => [...prev, { id: `img-${Date.now()}`, pageNum: prev.length + 1, imageUrl: dataUrl, status: 'pending' }]);
-            
-            canvas.width = 0;
-            canvas.height = 0;
+            processImageToHighQualityWebP(canvas).then(dataUrl => {
+              setExtractedPages(prev => [...prev, { id: `img-${Date.now()}`, pageNum: prev.length + 1, imageUrl: dataUrl, status: 'pending' }]);
+              canvas.width = 0;
+              canvas.height = 0;
+              resolve();
+            });
+          } else {
+            resolve();
           }
-          resolve();
         };
         img.src = e.target?.result as string;
       };
