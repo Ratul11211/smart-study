@@ -96,8 +96,12 @@ export default function BackupMenu({ project, pages }: { project: ProjectData, p
       // Add to global shared_books collection
       await addDoc(collection(db, 'shared_books'), {
         originalProjectId: project.id,
-        name: project.name,
-        category: project.category,
+        name: project.name || '',
+        category: project.category || '',
+        bookClass: project.bookClass || '',
+        bookType: project.bookType || '',
+        version: project.version || '',
+        subject: project.subject || '',
         driveLink: linkData.webViewLink || data.webViewLink,
         sharedAt: serverTimestamp()
       });

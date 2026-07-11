@@ -2,8 +2,7 @@
 import Link from 'next/link';
 import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getProjectById, saveProject, getPages, savePageWithImage, loadPageImage, updatePageNum, deletePage, updatePageDrawings, generateId } from '@/lib/localDB';
 import dynamic from 'next/dynamic';
 import type { DrawingTool, Stroke } from '@/components/DrawingOverlay';
 import { ProjectData, PageData, ReadingData } from '@/types/project';
@@ -144,13 +143,7 @@ const UploadScans = ({ projectId, pages, onUploadComplete }: { projectId: string
     try {
       for(let i = 0; i < extractedPages.length; i++) {
         const page = extractedPages[i];
-        await addDoc(collection(db, 'pages'), {
-          projectId,
-          pageNum: Number(startPageNum) + i,
-          imageUrl: page.imageUrl,
-          status: page.status,
-          category: uploadCategory
-        });
+        await savePageWithImage(projectId, { id: generateId(), pageNum: Number(startPageNum) + i, imageUrl: page.imageUrl, status: page.status, category: uploadCategory });
       }
       alert('Pages uploaded successfully!');
       setExtractedPages([]);
@@ -252,9 +245,10 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
 
       let allFetched: PageData[] = [];
       for(const chunk of chunks) {
-        const q = query(collection(db, 'pages'), where('projectId', '==', projectId), where('pageNum', 'in', chunk));
-        const pSnap = await getDocs(q);
-        allFetched = [...allFetched, ...pSnap.docs.map(d => ({ id: d.id, ...d.data() } as PageData))];
+        const allPages = await getPages(projectId);
+        const chunkPages = allPages.filter(p => chunk.includes(p.pageNum));
+        const loadedPages = await Promise.all(chunkPages.map(p => loadPageImage(p)));
+        allFetched = [...allFetched, ...loadedPages];
       }
       
       const fetchedNums = allFetched.map(p => p.pageNum);
@@ -370,7 +364,7 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
             if (pageDrawings) {
                 updateData.drawings = pageDrawings;
             }
-            await updateDoc(doc(db, 'pages', p.id), updateData);
+            await savePageWithImage(projectId, { ...p, ...updateData } as any);
         }
     }
   };
@@ -383,9 +377,8 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
 
     const maxDone = Math.max(...donePages);
     const nextMax = Math.max(startPageNum, maxDone + 1);
-    const { auth } = await import('@/lib/firebase');
-    const user = auth.currentUser;
-    if (user) await updateDoc(doc(db, `users/${user.uid}/projects`, projectId), { maxUnlockedPage: nextMax });
+    const proj = await getProjectById(projectId);
+    if(proj) await saveProject({ ...proj, maxUnlockedPage: nextMax });
 
     const intervals = projectData.srsIntervals || [];
     let newTasks: any[] = [];
@@ -411,12 +404,8 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
     const updatedReadings = (projectData.readings || []).map(r => 
       r.id === activeReading.id ? { ...r, leftOffPage: maxDone + 1 } : r
     );
-    if (user) {
-      await updateDoc(doc(db, `users/${user.uid}/projects`, projectId), { 
-        srsTasks: updatedTasks,
-        readings: updatedReadings 
-      });
-    }
+    const proj2 = await getProjectById(projectId);
+    if(proj2) await saveProject({ ...proj2, srsTasks: updatedTasks, readings: updatedReadings });
 
     onUpdate();
     setSessionActive(false);
@@ -509,9 +498,10 @@ const ActiveRevisionView = ({ projectId, projectData, groupName, groupTasks, onU
       let allFetched: PageData[] = [];
       for (let i = 0; i < pageNums.length; i += 10) {
         const chunk = pageNums.slice(i, i + 10);
-        const q = query(collection(db, 'pages'), where('projectId', '==', projectId), where('pageNum', 'in', chunk));
-        const snap = await getDocs(q);
-        allFetched = [...allFetched, ...snap.docs.map(d => ({ id: d.id, ...d.data() } as PageData))];
+        const allPages = await getPages(projectId);
+        const chunkPages = allPages.filter(p => chunk.includes(p.pageNum));
+        const loadedPages = await Promise.all(chunkPages.map(p => loadPageImage(p)));
+        allFetched = [...allFetched, ...loadedPages];
       }
       setPages(allFetched);
       setLoading(false);
@@ -521,15 +511,14 @@ const ActiveRevisionView = ({ projectId, projectData, groupName, groupTasks, onU
 
   const handleMarkRevisionDone = useCallback(async () => {
     for (const [pageId, drawings] of Object.entries(modifiedDrawings)) {
-       await updateDoc(doc(db, 'pages', pageId), { drawings });
+       await updatePageDrawings(projectId, pageId, drawings);
     }
     const taskIds = groupTasks.map(t => t.id);
     const updatedTasks = (projectData.srsTasks || []).map((t: any) => 
       taskIds.includes(t.id) ? { ...t, status: 'done' } : t
     );
-    const { auth } = await import('@/lib/firebase');
-    const user = auth.currentUser;
-    if (user) await updateDoc(doc(db, `users/${user.uid}/projects`, projectId), { srsTasks: updatedTasks });
+    const proj = await getProjectById(projectId);
+    if(proj) await saveProject({ ...proj, srsTasks: updatedTasks });
     onUpdate();
     alert(`Great job! You have completed your ${groupName}.`);
   }, [groupTasks, projectData, projectId, groupName, onUpdate, router, modifiedDrawings]);
@@ -644,13 +633,13 @@ const RevisionView = ({ projectId, projectData, onUpdate, activeReading, setHead
 
 
 
-const PageItem = ({ p, onUpdate, labelPrefix }: { p: PageData, onUpdate: ()=>void, labelPrefix: string }) => {
+const PageItem = ({ projectId, p, onUpdate, labelPrefix } : { projectId: string, p: PageData, onUpdate: ()=>void, labelPrefix: string }) => {
   const [editing, setEditing] = useState(false);
   const [num, setNum] = useState(p.pageNum);
 
   const handleSave = async () => {
     if(num !== p.pageNum) {
-      await updateDoc(doc(db, 'pages', p.id), { pageNum: Number(num) });
+      await updatePageNum(projectId, p.id, Number(num));
     }
     setEditing(false);
     onUpdate();
@@ -658,7 +647,7 @@ const PageItem = ({ p, onUpdate, labelPrefix }: { p: PageData, onUpdate: ()=>voi
 
   const handleDelete = async () => {
     if(confirm('Delete this page?')) {
-      await deleteDoc(doc(db, 'pages', p.id));
+      await deletePage(projectId, p.id);
       onUpdate();
     }
   };
@@ -683,14 +672,16 @@ const PageItem = ({ p, onUpdate, labelPrefix }: { p: PageData, onUpdate: ()=>voi
   );
 };
 
-const BookTab = ({ pages, onUpdate }: { pages: PageData[], onUpdate: ()=>void }) => {
+const BookTab = ({ projectId, pages, onUpdate }: { projectId: string, pages: PageData[], onUpdate: ()=>void }) => {
   const boiPages = pages.filter(p => p.category === 'BOOK' || p.category === 'Boi' || !p.category).sort((a,b)=>a.pageNum - b.pageNum);
+  const unassigned = pages.filter(p => p.category !== 'BOOK' && p.category !== 'Boi' && p.category).sort((a,b)=>a.pageNum - b.pageNum);
   return (
   <div style={{ padding: '2rem', textAlign: 'center' }}>
     <h3 style={{ marginBottom: '1rem' }}>BOOK</h3>
     <div style={{ display: 'grid', gap: '2rem', justifyItems: 'center' }}>
       {boiPages.length === 0 && <p style={{ opacity: 0.7 }}>No pages found.</p>}
-      {boiPages.map(p => <PageItem key={p.id} p={p} onUpdate={onUpdate} labelPrefix="Page" />)}
+      {boiPages.map(p => <PageItem key={p.id} projectId={projectId} p={p} onUpdate={onUpdate} labelPrefix="Page" />)}
+      {unassigned.map(p => <PageItem key={p.id} projectId={projectId} p={p} onUpdate={onUpdate} labelPrefix="File" />)}
     </div>
   </div>
 )};
@@ -712,18 +703,16 @@ const SRS = ({ projectId, currentIntervals }: { projectId: string, currentInterv
       setIntervals(updated);
       setNewInterval('');
       setIsAdding(false);
-      const { auth } = await import('@/lib/firebase');
-      const user = auth.currentUser;
-      if (user) await updateDoc(doc(db, `users/${user.uid}/projects`, projectId), { srsIntervals: updated });
+      const proj = await getProjectById(projectId);
+      if(proj) await saveProject({ ...proj, srsIntervals: updated });
     }
   };
 
   const removeInterval = async (index: number) => {
     const updated = intervals.filter((_, i) => i !== index);
     setIntervals(updated);
-    const { auth } = await import('@/lib/firebase');
-    const user = auth.currentUser;
-    if (user) await updateDoc(doc(db, `users/${user.uid}/projects`, projectId), { srsIntervals: updated });
+    const proj = await getProjectById(projectId);
+      if(proj) await saveProject({ ...proj, srsIntervals: updated });
   };
 
   return (
@@ -784,9 +773,7 @@ const ReadingSetup = ({ projectId, currentReadings }: { projectId: string, curre
     
     if (changed) {
       setReadings(updated);
-      import('@/lib/firebase').then(({ auth }) => {
-        if (auth.currentUser) updateDoc(doc(db, `users/${auth.currentUser.uid}/projects`, projectId), { readings: updated }).catch(console.error);
-      });
+      getProjectById(projectId).then(proj => { if(proj) saveProject({ ...proj, readings: updated }) });
     }
   }, [readings, projectId]);
 
@@ -801,9 +788,8 @@ const ReadingSetup = ({ projectId, currentReadings }: { projectId: string, curre
       setReadings(updated);
       setTitle('');
       setStartPage('');
-      const { auth } = await import('@/lib/firebase');
-      const user = auth.currentUser;
-      if (user) await updateDoc(doc(db, `users/${user.uid}/projects`, projectId), { readings: updated });
+      const proj = await getProjectById(projectId);
+    if(proj) await saveProject({ ...proj, readings: updated });
     }
   };
 
@@ -811,9 +797,8 @@ const ReadingSetup = ({ projectId, currentReadings }: { projectId: string, curre
     const updated = readings.map(r => r.id === id ? { ...r, title: editTitle } : r);
     setReadings(updated);
     setEditingId(null);
-    const { auth } = await import('@/lib/firebase');
-    const user = auth.currentUser;
-    if (user) await updateDoc(doc(db, `users/${user.uid}/projects`, projectId), { readings: updated });
+    const proj = await getProjectById(projectId);
+    if(proj) await saveProject({ ...proj, readings: updated });
   };
 
   const deleteReading = async (readingId: string) => {
@@ -822,26 +807,23 @@ const ReadingSetup = ({ projectId, currentReadings }: { projectId: string, curre
     const updated = readings.map(r => r.id === readingId ? { ...r, deletedAt } : r);
     setReadings(updated);
     setEditingId(null);
-    const { auth } = await import('@/lib/firebase');
-    const user = auth.currentUser;
-    if (user) await updateDoc(doc(db, `users/${user.uid}/projects`, projectId), { readings: updated });
+    const proj = await getProjectById(projectId);
+    if(proj) await saveProject({ ...proj, readings: updated });
   };
 
   const restoreReading = async (readingId: string) => {
     const updated = readings.map(r => r.id === readingId ? { ...r, deletedAt: undefined } : r);
     setReadings(updated);
-    const { auth } = await import('@/lib/firebase');
-    const user = auth.currentUser;
-    if (user) await updateDoc(doc(db, `users/${user.uid}/projects`, projectId), { readings: updated });
+    const proj = await getProjectById(projectId);
+    if(proj) await saveProject({ ...proj, readings: updated });
   };
 
   const permanentDeleteReading = async (readingId: string) => {
     if (!window.confirm('Permanently delete this reading plan? This cannot be undone.')) return;
     const updated = readings.filter(r => r.id !== readingId);
     setReadings(updated);
-    const { auth } = await import('@/lib/firebase');
-    const user = auth.currentUser;
-    if (user) await updateDoc(doc(db, `users/${user.uid}/projects`, projectId), { readings: updated });
+    const proj = await getProjectById(projectId);
+    if(proj) await saveProject({ ...proj, readings: updated });
   };
 
   const activeReadings = readings.filter(r => !r.deletedAt);
@@ -1039,9 +1021,8 @@ function ProjectContent() {
       return;
     }
     try {
-      const docSnap = await getDoc(doc(db, `users/${user.uid}/projects`, id));
-      if(docSnap.exists()) {
-        const data = docSnap.data();
+      const data = await getProjectById(id);
+      if(data) {
         let readings = data.readings || [];
         
         const now = new Date().getTime();
@@ -1061,17 +1042,15 @@ function ProjectContent() {
         }
         
         if (changed) {
-          await updateDoc(doc(db, `users/${user.uid}/projects`, id), { readings: validReadings });
+          await saveProject({ ...data, readings: validReadings });
           data.readings = validReadings;
         }
 
-        setProjectData({ id: docSnap.id, ...data } as any);
+        setProjectData(data as any);
       }
       
       if (showManagement) {
-        const q = query(collection(db, 'pages'), where('projectId', '==', id));
-        const pSnap = await getDocs(q);
-        const pData = pSnap.docs.map(d => ({ id: d.id, ...d.data() } as PageData)).sort((a,b)=>a.pageNum - b.pageNum);
+        const pData = (await getPages(id)).sort((a,b)=>a.pageNum - b.pageNum);
         setPages(pData);
       } else {
         setPages([]);
@@ -1241,7 +1220,7 @@ function ProjectContent() {
             {managementTab === 'Reading' && <ReadingSetup projectId={id} currentReadings={projectData.readings || []} />}
             {managementTab === 'Import' && <UploadScans projectId={id} pages={pages} onUploadComplete={() => { fetchData(); setManagementTab('Book'); }} />}
             {managementTab === 'SRS' && <SRS projectId={id} currentIntervals={projectData.srsIntervals} />}
-            {managementTab === 'Book' && <BookTab pages={pages} onUpdate={fetchData} />}
+            {managementTab === 'Book' && <BookTab projectId={id} pages={pages} onUpdate={fetchData} />}
           </div>
         ) : (
           <div style={{ minHeight: '400px' }}>
