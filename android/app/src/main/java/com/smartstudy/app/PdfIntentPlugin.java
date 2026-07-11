@@ -74,8 +74,16 @@ public class PdfIntentPlugin extends Plugin {
                     
                 } catch (Exception e) {
                     Log.e("PdfIntentPlugin", "Error copying PDF intent data to cache", e);
+                    JSObject err = new JSObject();
+                    err.put("error", e.getMessage());
+                    notifyListeners("onPdfError", err, true);
                 }
             }).start();
+        } else if (Intent.ACTION_VIEW.equals(action)) {
+            // It was a view intent but not recognized as PDF
+            JSObject err = new JSObject();
+            err.put("error", "Not recognized as PDF. Type: " + type + ", URI: " + (uri != null ? uri.toString() : "null"));
+            notifyListeners("onPdfError", err, true);
         }
     }
 

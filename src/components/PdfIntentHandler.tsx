@@ -21,16 +21,24 @@ export function PdfIntentHandler() {
       if (res.url) handlePdf(res.url);
     });
 
-    // Listen for intents while the app is already open
     let sub: any = null;
+    let errSub: any = null;
+    
     PdfIntent.addListener('onPdfReceived', (info) => {
       handlePdf(info.url);
     }).then((s: any) => {
       sub = s;
     });
 
+    PdfIntent.addListener('onPdfError', (info) => {
+      alert("PDF Error: " + info.error);
+    }).then((s: any) => {
+      errSub = s;
+    });
+
     return () => {
       if (sub && sub.remove) sub.remove();
+      if (errSub && errSub.remove) errSub.remove();
     };
   }, [router]);
 

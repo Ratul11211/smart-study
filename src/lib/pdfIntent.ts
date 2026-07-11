@@ -6,6 +6,10 @@ export interface PdfIntentPlugin {
     eventName: 'onPdfReceived',
     listenerFunc: (info: { url: string }) => void
   ): any;
+  addListener(
+    eventName: 'onPdfError',
+    listenerFunc: (info: { error: string }) => void
+  ): any;
 }
 
 export const PdfIntent = registerPlugin<PdfIntentPlugin>('PdfIntent');
