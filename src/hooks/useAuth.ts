@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { User, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut, onAuthStateChanged, GoogleAuthProvider } from 'firebase/auth';
+import { User, signInWithPopup, signInWithCredential, getRedirectResult, signOut as firebaseSignOut, onAuthStateChanged, GoogleAuthProvider } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import { auth, googleProvider } from '../lib/firebase';
 
 export function useAuth() {
@@ -33,7 +35,24 @@ export function useAuth() {
   const signIn = async () => {
     try {
       setLoading(true);
-      await signInWithRedirect(auth, googleProvider);
+      if (Capacitor.isNativePlatform()) {
+        const result = await FirebaseAuthentication.signInWithGoogle({
+          scopes: ['https://www.googleapis.com/auth/drive.file']
+        });
+        if (result.credential?.idToken) {
+          const credential = GoogleAuthProvider.credential(result.credential.idToken);
+          await signInWithCredential(auth, credential);
+          if (result.credential.accessToken) {
+            localStorage.setItem('google_access_token', result.credential.accessToken);
+          }
+        }
+      } else {
+        const result = await signInWithPopup(auth, googleProvider);
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        if (credential?.accessToken) {
+          localStorage.setItem('google_access_token', credential.accessToken);
+        }
+      }
     } catch (error) {
       console.error("Error signing in with Google", error);
       setLoading(false);
@@ -44,6 +63,9 @@ export function useAuth() {
     try {
       localStorage.removeItem('google_access_token');
       await firebaseSignOut(auth);
+      if (Capacitor.isNativePlatform()) {
+        await FirebaseAuthentication.signOut();
+      }
     } catch (error) {
       console.error("Error signing out", error);
     }
