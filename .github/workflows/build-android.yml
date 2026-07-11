@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout Code
@@ -43,6 +45,12 @@ jobs:
           echo "NEW SHA-1 FINGERPRINT FOR FIREBASE:"
           keytool -list -v -keystore smartstudy.jks -alias smartstudy -storepass 123456 -keypass 123456 | grep SHA1
           echo "----------------------------------------"
+          # Commit the keystore back to the repository so it stays permanent
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add smartstudy.jks
+          git commit -m "chore: save permanent keystore for Firebase SHA-1"
+          git push
         else
           echo "Keystore exists. Using existing keystore."
           echo "----------------------------------------"
