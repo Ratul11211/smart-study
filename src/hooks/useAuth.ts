@@ -37,6 +37,7 @@ export function useAuth() {
       setLoading(true);
       if (Capacitor.isNativePlatform()) {
         const result = await FirebaseAuthentication.signInWithGoogle({
+          clientId: '260568166093-iojom32lo583k36kv60cbt9iocbg2egr.apps.googleusercontent.com',
           scopes: ['https://www.googleapis.com/auth/drive.file']
         });
         if (result.credential?.idToken) {
@@ -55,6 +56,9 @@ export function useAuth() {
       }
     } catch (error) {
       console.error("Error signing in with Google", error);
+      if (Capacitor.isNativePlatform()) {
+        alert("Google Login Error: " + JSON.stringify(error) + " | " + String(error));
+      }
       setLoading(false);
     }
   };
