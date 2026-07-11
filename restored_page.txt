@@ -1,0 +1,381 @@
+Created At: 2026-07-07T17:53:27Z
+Completed At: 2026-07-07T17:53:27Z
+File Path: `file:///e:/New%20folder%20%283%29/smart-study/src/app/page.tsx`
+Total Lines: 245
+Total Bytes: 12333
+Showing lines 15 to 45
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+15:   const [editName, setEditName] = useState('');
+16:   const [editCategory, setEditCategory] = useState('');
+17:   const [showRecycleBin, setShowRecycleBin] = useState(false);
+18: 
+19:   useEffect(() => {
+20:     const fetchProjects = async () => {
+21:       try {
+22:         const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
+23:         const snapshot = await getDocs(q);
+24:         const fetchedProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+25:         
+26:         const now = new Date().getTime();
+27:         const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+28:         const validProjects = [];
+29:         
+30:         for (const proj of fetchedProjects) {
+31:           if (proj.deletedAt) {
+32:             const deletedTime = new Date(proj.deletedAt).getTime();
+33:             if (now - deletedTime > thirtyDaysMs) {
+34:               await deleteDoc(doc(db, 'projects', proj.id));
+35:               continue; // Skip adding to validProjects
+36:             }
+37:           }
+38:           validProjects.push(proj);
+39:         }
+40:         
+41:         setProjects(validProjects);
+42:       } catch (e) {
+43:         console.error(e);
+44:       } finally {
+45:         setLoading(false);
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+
+
+=====
+
+Created At: 2026-07-07T18:28:50Z
+Completed At: 2026-07-07T18:28:50Z
+File Path: `file:///e:/New%20folder%20%283%29/smart-study/src/app/page.tsx`
+Total Lines: 245
+Total Bytes: 12340
+Showing lines 60 to 150
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+60:     try {
+61:       await updateDoc(doc(db, 'projects', id), {
+62:         name: editName,
+63:         category: editCategory
+64:       });
+65:       setProjects(projects.map(p => p.id === id ? { ...p, name: editName, category: editCategory } : p));
+66:       setEditingProjectId(null);
+67:     } catch (err) {
+68:       console.error(err);
+69:       alert('Failed to update project');
+70:     }
+71:   };
+72: 
+73:   const handleDelete = async (id: string, e: React.MouseEvent) => {
+74:     e.preventDefault();
+75:     if (!window.confirm('Are you sure you want to move this project to the Recycle Bin?')) return;
+76:     try {
+77:       const deletedAt = new Date().toISOString();
+78:       await updateDoc(doc(db, 'projects', id), { deletedAt });
+79:       setProjects(projects.map(p => p.id === id ? { ...p, deletedAt } : p));
+80:       setEditingProjectId(null);
+81:     } catch (err) {
+82:       console.error(err);
+83:       alert('Failed to delete project');
+84:     }
+85:   };
+86: 
+87:   const handleRestore = async (id: string, e: React.MouseEvent) => {
+88:     e.preventDefault();
+89:     try {
+90:       await updateDoc(doc(db, 'projects', id), { deletedAt: null });
+91:       setProjects(projects.map(p => p.id === id ? { ...p, deletedAt: undefined } : p));
+92:     } catch(err) {
+93:       console.error(err);
+94:       alert('Failed to restore project');
+95:     }
+96:   };
+97: 
+98:   const handlePermanentDelete = async (id: string, e: React.MouseEvent) => {
+99:     e.preventDefault();
+100:     if (!window.confirm('Permanently delete this project? This cannot be undone.')) return;
+101:     try {
+102:       await deleteDoc(doc(db, 'projects', id));
+103:       setProjects(projects.filter(p => p.id !== id));
+104:     } catch(err) {
+105:       console.error(err);
+106:       alert('Failed to permanently delete');
+107:     }
+108:   };
+109: 
+110:   const activeProjects = projects.filter(p => !p.deletedAt);
+111:   const deletedProjects = projects.filter(p => p.deletedAt);
+112:   const displayedProjects = showRecycleBin ? deletedProjects : activeProjects;
+113: 
+114:   return (
+115:     <div className="container" style={{ paddingTop: '1rem', paddingBottom: '3rem' }}>
+116:       <header style={{ marginBottom: '3rem', textAlign: 'center', position: 'relative' }}>
+117:         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.8rem', paddingBottom: '1rem' }}>
+118:           <ThemeToggle />
+119:           <button 
+120:             className="btn btn-secondary" 
+121:             onClick={() => setIsEditMode(!isEditMode)} 
+122:             style={{ 
+123:               display: 'flex', alignItems: 'center', justifyContent: 'center',
+124:               width: '40px', height: '40px', borderRadius: '50%', padding: 0,
+125:               background: isEditMode ? 'var(--primary)' : 'var(--surface-solid)', 
+126:               color: isEditMode ? 'white' : 'var(--foreground)', 
+127:               border: '1px solid var(--surface-border)', 
+128:               cursor: 'pointer',
+129:               transition: 'all 0.2s',
+130:               boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+131:             }}
+132:             title="Edit Projects"
+133:           >
+134:             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+135:               <path d="M8 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-1V6a2 2 0 0 0-2-2H8V4z" />
+136:               <path d="M4 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8zm3.5 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm2.5-2a1 1 0 0 0 0 2h4a1 1 0 0 0 0-2h-4zm-2.5 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm2.5-2a1 1 0 0 0 0 2h4a1 1 0 0 0 0-2h-4zm-2.5 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm2.5-2a1 1 0 0 0 0 2h4a1 1 0 0 0 0-2h-4z" />
+137:             </svg>
+138:           </button>
+139:         </div>
+140:         <h1 className="gradient-text" style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>Smart Study</h1>
+141:         <p style={{ opacity: 0.8 }}>Master your subjects with Spaced Repetition.</p>
+142:       </header>
+143: 
+144:       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+145:         <div className="glass-card fade-in" style={{ display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
+146:           
+147:           {/* Header with Title and Edit Toggle */}
+148:           <div className="flex-responsive" style={{ justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid var(--surface-border)', paddingBottom: '1rem' }}>
+149:             <h2 style={{ margin: 0 }}>{showRecycleBin ? 'Recycle Bin' : 'My Projects'}</h2>
+150:             <button 
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+
+
+=====
+
+Created At: 2026-07-07T18:28:56Z
+Completed At: 2026-07-07T18:28:56Z
+File Path: `file:///e:/New%20folder%20%283%29/smart-study/src/app/page.tsx`
+Total Lines: 245
+Total Bytes: 12340
+Showing lines 115 to 165
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+115:     <div className="container" style={{ paddingTop: '1rem', paddingBottom: '3rem' }}>
+116:       <header style={{ marginBottom: '3rem', textAlign: 'center', position: 'relative' }}>
+117:         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.8rem', paddingBottom: '1rem' }}>
+118:           <ThemeToggle />
+119:           <button 
+120:             className="btn btn-secondary" 
+121:             onClick={() => setIsEditMode(!isEditMode)} 
+122:             style={{ 
+123:               display: 'flex', alignItems: 'center', justifyContent: 'center',
+124:               width: '40px', height: '40px', borderRadius: '50%', padding: 0,
+125:               background: isEditMode ? 'var(--primary)' : 'var(--surface-solid)', 
+126:               color: isEditMode ? 'white' : 'var(--foreground)', 
+127:               border: '1px solid var(--surface-border)', 
+128:               cursor: 'pointer',
+129:               transition: 'all 0.2s',
+130:               boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+131:             }}
+132:             title="Edit Projects"
+133:           >
+134:             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+135:               <path d="M8 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-1V6a2 2 0 0 0-2-2H8V4z" />
+136:               <path d="M4 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8zm3.5 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm2.5-2a1 1 0 0 0 0 2h4a1 1 0 0 0 0-2h-4zm-2.5 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm2.5-2a1 1 0 0 0 0 2h4a1 1 0 0 0 0-2h-4zm-2.5 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm2.5-2a1 1 0 0 0 0 2h4a1 1 0 0 0 0-2h-4z" />
+137:             </svg>
+138:           </button>
+139:         </div>
+140:         <h1 className="gradient-text" style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>Smart Study</h1>
+141:         <p style={{ opacity: 0.8 }}>Master your subjects with Spaced Repetition.</p>
+142:       </header>
+143: 
+144:       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+145:         <div className="glass-card fade-in" style={{ display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
+146:           
+147:           {/* Header with Title and Edit Toggle */}
+148:           <div className="flex-responsive" style={{ justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid var(--surface-border)', paddingBottom: '1rem' }}>
+149:             <h2 style={{ margin: 0 }}>{showRecycleBin ? 'Recycle Bin' : 'My Projects'}</h2>
+150:             <button 
+151:               className="btn btn-secondary" 
+152:               onClick={() => setShowRecycleBin(!showRecycleBin)}
+153:               style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}
+154:             >
+155:               {showRecycleBin ? 'View Active Projects' : 'View Recycle Bin'}
+156:             </button>
+157:           </div>
+158:           
+159:           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+160:             
+161:             {/* Create New Project - Only visible in Edit Mode and Active Projects */}
+162:             {isEditMode && !showRecycleBin && (
+163:               <li className="fade-in-delayed">
+164:                 <Link href="/projects/create" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem', background: 'var(--surface-solid)', borderRadius: 'var(--radius-md)', border: '2px dashed var(--primary)', transition: 'border-color 0.2s', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>
+165:                   + Create a new project
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+
+
+=====
+
+Created At: 2026-07-07T18:36:02Z
+Completed At: 2026-07-07T18:36:03Z
+File Path: `file:///e:/New%20folder%20%283%29/smart-study/src/app/page.tsx`
+Total Lines: 258
+Total Bytes: 13141
+Showing lines 115 to 165
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+115:     <div className="container" style={{ paddingTop: '1rem', paddingBottom: '3rem' }}>
+116:       <header style={{ marginBottom: '3rem', textAlign: 'center', position: 'relative' }}>
+117:         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.8rem', paddingBottom: '1rem' }}>
+118:           <ThemeToggle />
+119:           <button 
+120:             className="btn btn-secondary" 
+121:             onClick={() => setIsEditMode(!isEditMode)} 
+122:             style={{ 
+123:               display: 'flex', alignItems: 'center', justifyContent: 'center',
+124:               width: '40px', height: '40px', borderRadius: '50%', padding: 0,
+125:               background: isEditMode ? 'var(--primary)' : 'var(--surface-solid)', 
+126:               color: isEditMode ? 'white' : 'var(--foreground)', 
+127:               border: '1px solid var(--surface-border)', 
+128:               cursor: 'pointer',
+129:               transition: 'all 0.2s',
+130:               boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+131:             }}
+132:             title="Edit Projects"
+133:           >
+134:             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+135:               <path d="M8 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-1V6a2 2 0 0 0-2-2H8V4z" />
+136:               <path d="M4 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8zm3.5 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm2.5-2a1 1 0 0 0 0 2h4a1 1 0 0 0 0-2h-4zm-2.5 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm2.5-2a1 1 0 0 0 0 2h4a1 1 0 0 0 0-2h-4zm-2.5 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm2.5-2a1 1 0 0 0 0 2h4a1 1 0 0 0 0-2h-4z" />
+137:             </svg>
+138:           </button>
+139:           <button 
+140:             className="btn btn-secondary" 
+141:             onClick={() => setShowRecycleBin(!showRecycleBin)} 
+142:             style={{ 
+143:               display: 'flex', alignItems: 'center', justifyContent: 'center',
+144:               width: '40px', height: '40px', borderRadius: '50%', padding: 0,
+145:               background: showRecycleBin ? 'var(--primary)' : 'var(--surface-solid)', 
+146:               color: showRecycleBin ? 'white' : 'var(--foreground)', 
+147:               border: '1px solid var(--surface-border)', 
+148:               cursor: 'pointer',
+149:               transition: 'all 0.2s',
+150:               boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+151:             }}
+152:             title={showRecycleBin ? 'View Active Projects' : 'View Recycle Bin'}
+153:           >
+154:             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+155:               <polyline points="3 6 5 6 21 6"></polyline>
+156:               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+157:             </svg>
+158:           </button>
+159:         </div>
+160:         <h1 className="gradient-text" style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>Smart Study</h1>
+161:         <p style={{ opacity: 0.8 }}>Master your subjects with Spaced Repetition.</p>
+162:       </header>
+163: 
+164:       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+165:         <div className="glass-card fade-in" style={{ display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
+
+
+=====
+
+Created At: 2026-07-07T18:37:17Z
+Completed At: 2026-07-07T18:37:17Z
+File Path: `file:///e:/New%20folder%20%283%29/smart-study/src/app/page.tsx`
+Total Lines: 258
+Total Bytes: 13141
+Showing lines 150 to 250
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+150:               boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+151:             }}
+152:             title={showRecycleBin ? 'View Active Projects' : 'View Recycle Bin'}
+153:           >
+154:             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+155:               <polyline points="3 6 5 6 21 6"></polyline>
+156:               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+157:             </svg>
+158:           </button>
+159:         </div>
+160:         <h1 className="gradient-text" style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>Smart Study</h1>
+161:         <p style={{ opacity: 0.8 }}>Master your subjects with Spaced Repetition.</p>
+162:       </header>
+163: 
+164:       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+165:         <div className="glass-card fade-in" style={{ display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
+166:           
+167:           {/* Header with Title and Edit Toggle */}
+168:           <div className="flex-responsive" style={{ justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid var(--surface-border)', paddingBottom: '1rem' }}>
+169:             <h2 style={{ margin: 0 }}>{showRecycleBin ? 'Recycle Bin' : 'My Projects'}</h2>
+170:           </div>
+171:           
+172:           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+173:             
+174:             {/* Create New Project - Only visible in Edit Mode and Active Projects */}
+175:             {isEditMode && !showRecycleBin && (
+176:               <li className="fade-in-delayed">
+177:                 <Link href="/projects/create" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem', background: 'var(--surface-solid)', borderRadius: 'var(--radius-md)', border: '2px dashed var(--primary)', transition: 'border-color 0.2s', fontWeight: 600, color: 'var(--primary)', textDecoration: 'none' }}>
+178:                   + Create a new project
+179:                 </Link>
+180:               </li>
+181:             )}
+182: 
+183:             {loading && <p style={{ opacity: 0.5, textAlign: 'center', padding: '2rem' }}>Loading projects...</p>}
+184:             
+185:             {!loading && displayedProjects.length === 0 && !isEditMode && (
+186:               <p style={{ opacity: 0.5, textAlign: 'center', padding: '2rem' }}>
+187:                 {showRecycleBin ? 'Recycle bin is empty.' : "You don't have any projects yet. Click Edit to create one."}
+188:               </p>
+189:             )}
+190: 
+191:             {!loading && displayedProjects.map((project, idx) => (
+192:               <li key={project.id} className="fade-in" style={{ animationDelay: `${idx * 0.05}s` }}>
+193:                 {editingProjectId === project.id ? (
+194:                   <div style={{ display: 'block', padding: '1rem', background: 'var(--surface-solid)', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary)' }}>
+195:                     <input 
+196:                       type="text" 
+197:                       value={editName} 
+198:                       onChange={(e) => setEditName(e.target.value)} 
+199:                       placeholder="Project Name"
+200:                       className="input-responsive"
+201:                       style={{ marginBottom: '0.5rem' }}
+202:                       autoFocus
+203:                     />
+204:                     <input 
+205:                       type="text" 
+206:                       value={editCategory} 
+207:                       onChange={(e) => setEditCategory(e.target.value)} 
+208:                       placeholder="Category"
+209:                       className="input-responsive"
+210:                       style={{ marginBottom: '1rem' }}
+211:                     />
+212:                     <div style={{ display: 'flex', gap: '0.5rem' }}>
+213:                       <button className="btn btn-primary" onClick={(e) => handleSave(project.id, e)} style={{ flex: 1, padding: '0.5rem' }}>Save</button>
+214:                       <button className="btn btn-secondary" onClick={(e) => handleDelete(project.id, e)} style={{ flex: 1, padding: '0.5rem', background: '#ef4444', color: 'white', border: 'none' }}>Delete</button>
+215:                       <button className="btn btn-secondary" onClick={(e) => { e.preventDefault(); setEditingProjectId(null); }} style={{ flex: 1, padding: '0.5rem' }}>Cancel</button>
+216:                     </div>
+217:                   </div>
+218:                 ) : (
+219:                   <Link href={`/project?id=${project.id}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 1rem', background: 'var(--surface-solid)', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)', transition: 'transform 0.2s, box-shadow 0.2s', textDecoration: 'none', color: 'inherit', pointerEvents: showRecycleBin ? 'none' : 'auto', opacity: showRecycleBin ? 0.7 : 1 }} className="project-link">
+220:                     <div>
+221:                       <div style={{ fontWeight: 600, fontSize: '1.2rem' }}>{project.name}</div>
+222:                       <div style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: '0.3rem' }}>{project.category}</div>
+223:                       {showRecycleBin && project.deletedAt && (
+224:                         <div style={{ fontSize: '0.8rem', color: '#ef4444', marginTop: '0.3rem' }}>
+225:                           Deleted on {new Date(project.deletedAt).toLocaleDateString()}
+226:                         </div>
+227:                       )}
+228:                     </div>
+229:                     {isEditMode && !showRecycleBin && (
+230:                       <button 
+231:                         className="btn btn-secondary" 
+232:                         style={{ padding: '0.4rem', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }} 
+233:                         onClick={(e) => handleEdit(project, e)}
+234:                         title="Edit Project"
+235:                       >
+236:                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+237:                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+238:                           <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+239:                         </svg>
+240:                       </button>
+241:                     )}
+242:                     {showRecycleBin && (
+243:                       <div style={{ display: 'flex', gap: '0.5rem', pointerEvents: 'auto' }}>
+244:                         <button className="btn btn-primary" onClick={(e) => handleRestore(project.id, e)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>Restore</button>
+245:                         <button className="btn btn-secondary" onClick={(e) => handlePermanentDelete(project.id, e)} style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', background: '#ef4444', color: 'white', border: 'none' }}>Delete</button>
+246:                       </div>
+247:                     )}
+248:                   </Link>
+249:                 )}
+250:               </li>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
