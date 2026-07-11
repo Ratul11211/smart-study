@@ -36,11 +36,18 @@ public class PdfIntentPlugin extends Plugin {
         if (intent == null) return;
         String action = intent.getAction();
         String type = intent.getType();
+        Uri uri = intent.getData();
         
-        if (Intent.ACTION_VIEW.equals(action) && type != null && type.equals("application/pdf")) {
-            Uri uri = intent.getData();
-            if (uri != null) {
-                // Copy to cache to make it readable by JS WebView
+        boolean isPdf = false;
+        if (type != null && type.toLowerCase().contains("pdf")) {
+            isPdf = true;
+        } else if (uri != null && uri.toString().toLowerCase().endsWith(".pdf")) {
+            isPdf = true;
+        }
+        
+        if (Intent.ACTION_VIEW.equals(action) && isPdf && uri != null) {
+            // Copy to cache in background to avoid blocking UI (black screen)
+            new Thread(() -> {
                 try {
                     InputStream inputStream = getContext().getContentResolver().openInputStream(uri);
                     if (inputStream == null) return;
@@ -68,7 +75,7 @@ public class PdfIntentPlugin extends Plugin {
                 } catch (Exception e) {
                     Log.e("PdfIntentPlugin", "Error copying PDF intent data to cache", e);
                 }
-            }
+            }).start();
         }
     }
 
