@@ -37,7 +37,6 @@ export function useAuth() {
       setLoading(true);
       if (Capacitor.isNativePlatform()) {
         const result = await FirebaseAuthentication.signInWithGoogle({
-          clientId: '260568166093-iojom32lo583k36kv60cbt9iocbg2egr.apps.googleusercontent.com',
           scopes: ['https://www.googleapis.com/auth/drive.file']
         });
         if (result.credential?.idToken) {
