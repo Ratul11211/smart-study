@@ -691,23 +691,6 @@ function ProjectContent() {
     return () => document.removeEventListener('toggle-header', handleToggle);
   }, []);
 
-  useEffect(() => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    let originalContent = '';
-    
-    // If in Study or Revision mode, allow zoom
-    if (meta && window.location.search.includes('mode=')) {
-      originalContent = meta.getAttribute('content') || '';
-      meta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes');
-    }
-
-    return () => {
-      if (meta && originalContent) {
-        meta.setAttribute('content', originalContent);
-      }
-    };
-  }, [searchParams]);
-
   const [isDrawingMenuOpen, setIsDrawingMenuOpen] = useState(false);
   const [managementTab, setManagementTab] = useState('Reading');
   const drawingMenuRef = useRef<HTMLDivElement>(null);
