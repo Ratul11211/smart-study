@@ -14,12 +14,16 @@
     "@capacitor/core": "^8.4.1",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/preferences": "^8.0.1",
+    "@react-spring/web": "^10.1.2",
+    "@use-gesture/react": "^10.3.1",
     "firebase": "^12.15.0",
     "jspdf": "^4.2.1",
     "next": "16.2.10",
     "pdfjs-dist": "^6.1.200",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-quick-pinch-zoom": "^5.1.1",
+    "react-zoom-pan-pinch": "^4.0.3"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.1",

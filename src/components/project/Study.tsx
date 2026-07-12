@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
+import QuickPinchZoom from 'react-quick-pinch-zoom';
 import { collection, doc, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { PageData, ProjectData, ReadingData } from '@/types/project';
@@ -259,16 +259,27 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
             const canCheck = p.pageNum === startPageNum || donePages.includes(p.pageNum - 1);
             return (
               <div key={p.id} id={`page-${p.pageNum}`} data-pagenum={p.pageNum} className="page-container" style={{ margin: '0 0 1rem 0', width: '100%', background: 'white', position: 'relative' }}>
-                      <DrawingOverlay 
-                        pageId={p.id}
-                        baseImageUrl={p.imageUrl} 
-                        initialDrawings={p.drawings || []}
-                        activeTool={activeDrawingTool}
-                        onDrawingsChange={(pid, strokes) => setModifiedDrawings(prev => ({ ...prev, [pid]: strokes }))}
-                        readOnly={!(canCheck && !isDone)}
-                      />
-                      
-                      {/* Floating circular Done button */}
+                <QuickPinchZoom 
+                  onUpdate={({x,y,scale}) => {
+                    const el = document.getElementById(`zoom-wrap-${p.id}`);
+                    if (el) el.style.transform = `translate3d(${x}px,${y}px,0) scale(${scale})`;
+                  }}
+                  tapZoomFactor={2}
+                  containerProps={{ style: { width: '100%', height: '100%' } }}
+                >
+                  <div id={`zoom-wrap-${p.id}`} style={{ width: '100%', transformOrigin: '0 0' }}>
+                    <DrawingOverlay 
+                      pageId={p.id}
+                      baseImageUrl={p.imageUrl} 
+                      initialDrawings={p.drawings || []}
+                      activeTool={activeDrawingTool}
+                      onDrawingsChange={(pid, strokes) => setModifiedDrawings(prev => ({ ...prev, [pid]: strokes }))}
+                      readOnly={!(canCheck && !isDone)}
+                    />
+                  </div>
+                </QuickPinchZoom>
+                
+                {/* Floating circular Done button */}
                       <button
                         disabled={!canCheck && !isDone}
                         onClick={(e) => { e.stopPropagation(); toggleDone(p.pageNum); }}
