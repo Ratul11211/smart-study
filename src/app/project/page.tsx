@@ -1080,7 +1080,15 @@ function ProjectContent() {
   if (!projectData || !id) return <div style={{ padding: '4rem', textAlign: 'center' }}>Project not found.</div>;
 
   return (
-    <div className="container fade-in" style={{ padding: mode ? 0 : '2rem 1rem', margin: mode ? 0 : 'auto', maxWidth: mode ? '100%' : undefined }}>
+    <div className="container fade-in" style={{ 
+      padding: mode ? 0 : '2rem 1rem', 
+      margin: mode ? 0 : 'auto', 
+      maxWidth: mode ? '100%' : undefined,
+      height: mode ? '100vh' : undefined,
+      display: mode ? 'flex' : 'block',
+      flexDirection: mode ? 'column' : undefined,
+      overflow: mode ? 'hidden' : undefined
+    }}>
       {!mode || showManagement ? (
         <div className="flex-responsive" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--background)', padding: '1rem 0', marginBottom: '1rem', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
@@ -1131,64 +1139,78 @@ function ProjectContent() {
         </div>
       ) : (
         <>
-          {/* Slim Auto-hiding Header for Study Mode */}
+          {/* Ultra-slim Transparent Header for Study Mode */}
           <div style={{ 
             position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100, 
-            background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)',
-            padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            background: 'linear-gradient(rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)',
+            padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
             transform: isUiVisible ? 'translateY(0)' : 'translateY(-100%)', transition: 'transform 0.3s',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            pointerEvents: isUiVisible ? 'auto' : 'none'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button 
                 onClick={() => { window.location.href = `/project?id=${id}`; }}
-                className="btn" 
-                style={{ padding: '0.4rem', background: 'transparent' }}
+                className="btn glass-card" 
+                style={{ padding: '0.6rem', color: 'white', border: 'none', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)' }}
+                title="Back to Reading List"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
               </button>
-              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{projectData.name}</h3>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+              {headerAction && (
+                <div style={{ position: 'relative' }} ref={drawingMenuRef}>
+                  <button 
+                    className="btn glass-card" 
+                    style={{ 
+                      padding: '0.6rem', color: activeDrawingTool ? 'var(--primary)' : 'white', 
+                      background: activeDrawingTool ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)', 
+                      border: 'none', backdropFilter: 'blur(10px)' 
+                    }}
+                    onClick={() => setIsDrawingMenuOpen(!isDrawingMenuOpen)}
+                    title="Marking Tools"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+                  </button>
+                  
+                  {isDrawingMenuOpen && (
+                    <div style={{
+                      position: 'absolute', top: '120%', right: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem',
+                      background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', padding: '0.5rem', borderRadius: '1rem',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.3)'
+                    }}>
+                      <button 
+                        className="btn" 
+                        style={{ padding: '0.6rem', borderRadius: '50%', background: activeDrawingTool === 'highlighter' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'highlighter' ? 'white' : 'var(--foreground)', border: 'none' }}
+                        onClick={() => { setActiveDrawingTool(activeDrawingTool === 'highlighter' ? null : 'highlighter'); setIsDrawingMenuOpen(false); }}
+                        title="Highlighter"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l-4 4a2.828 2.828 0 0 0 4 4l4-4"></path><path d="M12 15l4-4-4-4-4 4z"></path><path d="M16 11l4-4a2.828 2.828 0 1 0-4-4l-4 4"></path></svg>
+                      </button>
+                      <button 
+                        className="btn" 
+                        style={{ padding: '0.6rem', borderRadius: '50%', background: activeDrawingTool === 'pen' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'pen' ? 'white' : 'var(--foreground)', border: 'none' }}
+                        onClick={() => { setActiveDrawingTool(activeDrawingTool === 'pen' ? null : 'pen'); setIsDrawingMenuOpen(false); }}
+                        title="Pen"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+                      </button>
+                      <button 
+                        className="btn" 
+                        style={{ padding: '0.6rem', borderRadius: '50%', background: activeDrawingTool === 'eraser' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'eraser' ? 'white' : 'var(--foreground)', border: 'none' }}
+                        onClick={() => { setActiveDrawingTool(activeDrawingTool === 'eraser' ? null : 'eraser'); setIsDrawingMenuOpen(false); }}
+                        title="Smart Eraser"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               {headerAction}
             </div>
           </div>
-
-          {/* Google Drive-like Floating Bottom Drawing Menu */}
-          {headerAction && (
-            <div style={{
-              position: 'fixed', bottom: '2rem', left: '50%', transform: `translate(-50%, ${isUiVisible ? '0' : '150%'})`,
-              transition: 'transform 0.3s', zIndex: 1100, display: 'flex', gap: '0.5rem',
-              background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)',
-              padding: '0.5rem', borderRadius: '2rem', boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
-              border: '1px solid #ddd'
-            }}>
-              <button 
-                className="btn" 
-                style={{ padding: '0.6rem', borderRadius: '50%', background: activeDrawingTool === 'highlighter' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'highlighter' ? 'white' : 'var(--foreground)' }}
-                onClick={() => setActiveDrawingTool(activeDrawingTool === 'highlighter' ? null : 'highlighter')}
-                title="Highlighter (Multiply Blend)"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l-4 4a2.828 2.828 0 0 0 4 4l4-4"></path><path d="M12 15l4-4-4-4-4 4z"></path><path d="M16 11l4-4a2.828 2.828 0 1 0-4-4l-4 4"></path></svg>
-              </button>
-              <button 
-                className="btn" 
-                style={{ padding: '0.6rem', borderRadius: '50%', background: activeDrawingTool === 'pen' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'pen' ? 'white' : 'var(--foreground)' }}
-                onClick={() => setActiveDrawingTool(activeDrawingTool === 'pen' ? null : 'pen')}
-                title="Pen"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
-              </button>
-              <button 
-                className="btn" 
-                style={{ padding: '0.6rem', borderRadius: '50%', background: activeDrawingTool === 'eraser' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'eraser' ? 'white' : 'var(--foreground)' }}
-                onClick={() => setActiveDrawingTool(activeDrawingTool === 'eraser' ? null : 'eraser')}
-                title="Smart Eraser"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>
-              </button>
-            </div>
-          )}
         </>
       )}
 

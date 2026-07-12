@@ -139,8 +139,9 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
   useEffect(() => {
     if (sessionActive) {
       setHeaderAction(
-        <button className="btn btn-primary" onClick={handleDoneForToday}>
-          ✓ Done for today
+        <button className="btn btn-primary" onClick={handleDoneForToday} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', borderRadius: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Done
         </button>
       );
     } else {
@@ -265,46 +266,56 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
                 const isSessionDone = donePages.includes(p.pageNum);
                 const isDone = isPastDone || isSessionDone;
                 const canCheck = p.pageNum === startPageNum || donePages.includes(p.pageNum - 1);
-                
-                return (
-                  <div key={p.id} id={`page-${p.pageNum}`} data-pagenum={p.pageNum} className="page-container" style={{ margin: '0 auto 1rem auto', width: '100%', maxWidth: '800px', background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                    {isUiVisible && (
-                      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#555' }}>Page {p.pageNum}</span>
-                        {isPastDone ? (
-                          <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem' }}>Read previously</span>
+                              return (
+                    <div key={p.id} id={`page-${p.pageNum}`} data-pagenum={p.pageNum} className="page-container" style={{ margin: '0 auto 1rem auto', width: '100%', maxWidth: '800px', background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', position: 'relative' }}>
+                      <DrawingOverlay 
+                        pageId={p.id}
+                        baseImageUrl={p.imageUrl} 
+                        initialDrawings={p.drawings || []}
+                        activeTool={activeDrawingTool}
+                        onDrawingsChange={(pid, strokes) => setModifiedDrawings(prev => ({ ...prev, [pid]: strokes }))}
+                        readOnly={!(canCheck && !isDone)}
+                      />
+                      
+                      {/* Floating circular Done button */}
+                      <button
+                        disabled={!canCheck && !isDone}
+                        onClick={(e) => { e.stopPropagation(); toggleDone(p.pageNum); }}
+                        title={isDone ? "Done" : (canCheck ? "Mark as done" : "Mark previous pages first")}
+                        style={{
+                          position: 'absolute',
+                          bottom: '1rem',
+                          right: '1rem',
+                          width: '3.5rem',
+                          height: '3.5rem',
+                          borderRadius: '50%',
+                          background: isDone ? 'var(--primary)' : 'rgba(0,0,0,0.4)',
+                          color: 'white',
+                          border: '3px solid white',
+                          boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: canCheck ? 'pointer' : 'not-allowed',
+                          opacity: (canCheck || isDone) ? (isUiVisible ? 1 : 0.6) : 0,
+                          zIndex: 10,
+                          transition: 'all 0.3s'
+                        }}
+                      >
+                        {isDone ? (
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         ) : (
-                          <button 
-                            disabled={!canCheck}
-                            onClick={(e) => { e.stopPropagation(); toggleDone(p.pageNum); }}
-                            style={{
-                              background: isDone ? 'var(--primary)' : 'transparent',
-                              color: isDone ? 'white' : (canCheck ? 'var(--foreground)' : '#ccc'),
-                              border: `2px solid ${isDone ? 'var(--primary)' : (canCheck ? 'var(--foreground)' : '#eee')}`,
-                              padding: '0.2rem 0.8rem', borderRadius: '1rem', cursor: canCheck ? 'pointer' : 'not-allowed',
-                              transition: 'all 0.2s', fontWeight: 600, fontSize: '0.8rem'
-                            }}
-                          >
-                            {isDone ? 'Done' : 'Mark Done'}
-                          </button>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>
                         )}
-                      </div>
-                    )}
-                    <DrawingOverlay 
-                      pageId={p.id}
-                      baseImageUrl={p.imageUrl} 
-                      initialDrawings={p.drawings || []}
-                      activeTool={activeDrawingTool}
-                      onDrawingsChange={(pid, strokes) => setModifiedDrawings(prev => ({ ...prev, [pid]: strokes }))}
-                      readOnly={!(canCheck && !isDone)}
-                    />
-                    {!canCheck && !isDone && isUiVisible && (
-                      <div style={{ padding: '0.5rem', textAlign: 'center', background: '#fff3cd', color: '#856404', fontSize: '0.85rem' }}>
-                        Mark previous pages as done first.
-                      </div>
-                    )}
-                  </div>
-                );
+                      </button>
+
+                      {!canCheck && !isDone && isUiVisible && (
+                        <div style={{ position: 'absolute', bottom: '1.5rem', right: '5rem', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '1rem', fontSize: '0.8rem', pointerEvents: 'none' }}>
+                          Mark previous first
+                        </div>
+                      )}
+                    </div>
+                  );     
               })}
               {loadingPages && <div style={{ padding: '2rem', width: '100%', textAlign: 'center', opacity: 0.7 }}>Loading pages...</div>}
             </div>
