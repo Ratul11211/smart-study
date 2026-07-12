@@ -6,11 +6,12 @@ import { PageData, ProjectData } from '@/types/project';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 interface StudyProps {
-  projectData: ProjectData;
+  projectData?: ProjectData;
   projectId: string;
+  [key: string]: any;
 }
 
-export default function Study({ projectId }: StudyProps) {
+export default function Study({ projectId, ...props }: StudyProps) {
   const [pages, setPages] = useState<PageData[]>([]);
   const [loading, setLoading] = useState(true);
 
