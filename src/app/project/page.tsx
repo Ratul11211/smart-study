@@ -955,6 +955,14 @@ function ProjectContent() {
   const [showManagement, setShowManagement] = useState(false);
   const [headerAction, setHeaderAction] = useState<React.ReactNode | null>(null);
   const [activeDrawingTool, setActiveDrawingTool] = useState<DrawingTool | null>(null);
+  
+  const [isUiVisible, setIsUiVisible] = useState(true);
+
+  useEffect(() => {
+    const handleToggle = (e: any) => setIsUiVisible(e.detail.visible);
+    document.addEventListener('toggle-header', handleToggle);
+    return () => document.removeEventListener('toggle-header', handleToggle);
+  }, []);
   const [isDrawingMenuOpen, setIsDrawingMenuOpen] = useState(false);
   const [managementTab, setManagementTab] = useState('Reading');
   const drawingMenuRef = useRef<HTMLDivElement>(null);
