@@ -203,9 +203,8 @@ const UploadScans = ({ projectId, pages, onUploadComplete }: { projectId: string
 
 
 
-const ActiveRevisionView = ({ projectId, projectData, groupName, groupTasks, onUpdate, setHeaderAction, activeDrawingTool }: { projectId: string, projectData: ProjectData, groupName: string, groupTasks: any[], onUpdate: ()=>void, setHeaderAction: (node: React.ReactNode | null) => void }) => {
+const ActiveRevisionView = ({ projectId, projectData, groupName, groupTasks, onUpdate, setHeaderAction }: { projectId: string, projectData: ProjectData, groupName: string, groupTasks: any[], onUpdate: ()=>void, setHeaderAction: (node: React.ReactNode | null) => void }) => {
   const router = useRouter();
-  const [modifiedDrawings, setModifiedDrawings] = useState<Record<string, Stroke[]>>({});
   const sortedTasks = [...groupTasks].sort((a,b) => a.page - b.page);
   
   const [pages, setPages] = useState<PageData[]>([]);
@@ -231,18 +230,14 @@ const ActiveRevisionView = ({ projectId, projectData, groupName, groupTasks, onU
   }, [projectId, groupTasks]);
 
   const handleMarkRevisionDone = useCallback(async () => {
-    for (const [pageId, drawings] of Object.entries(modifiedDrawings)) {
-       await updatePageDrawings(projectId, pageId, drawings);
-    }
     const taskIds = groupTasks.map(t => t.id);
     const updatedTasks = (projectData.srsTasks || []).map((t: any) => 
       taskIds.includes(t.id) ? { ...t, status: 'done' } : t
     );
-    const proj = await getProjectById(projectId);
-    if(proj) await saveProject({ ...proj, srsTasks: updatedTasks });
+    await saveProject({ ...projectData, srsTasks: updatedTasks });
     onUpdate();
     alert(`Great job! You have completed your ${groupName}.`);
-  }, [groupTasks, projectData, projectId, groupName, onUpdate, router, modifiedDrawings]);
+  }, [groupTasks, projectData, projectId, groupName, onUpdate, router]);
 
   useEffect(() => {
     setHeaderAction(
@@ -271,14 +266,10 @@ const ActiveRevisionView = ({ projectId, projectData, groupName, groupTasks, onU
                 <span style={{ fontSize: '0.9rem', opacity: 0.7 }}>Due: {task.dueDate}</span>
               </div>
               <div style={{ background: 'white' }}>
-                <DrawingOverlay 
-                  pageId={pageData.id}
-                  baseImageUrl={pageData.imageUrl}
-                  initialDrawings={pageData.drawings || []}
-                  activeTool={activeDrawingTool}
-                  onDrawingsChange={(pid, drawings) => {
-                    setModifiedDrawings(prev => ({ ...prev, [pid]: drawings }));
-                  }}
+                <img 
+                  src={pageData.imageUrl} 
+                  alt={`Page ${task.page}`} 
+                  style={{ width: '100%', display: 'block' }} 
                 />
               </div>
             </div>
