@@ -47,7 +47,7 @@ export default function Study({ projectId, ...props }: StudyProps) {
         minScale={1}
         maxScale={4}
         wheel={{ step: 0.1 }}
-        doubleClick={{ disabled: false }}
+        doubleClick={{ disabled: true }}
         panning={{ disabled: !isZoomed }}
         centerZoomedOut={false}
         limitToBounds={false}
