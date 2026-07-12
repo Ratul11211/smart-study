@@ -13,25 +13,6 @@ export default function Study({ projectId, ...props }: StudyProps) {
   const [pages, setPages] = useState<PageData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Enable native pinch-to-zoom when this component mounts
-  useEffect(() => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    let originalContent = '';
-    
-    if (meta) {
-      originalContent = meta.getAttribute('content') || '';
-      // Allow scaling up to 5x natively
-      meta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes');
-    }
-
-    return () => {
-      // Revert back to original viewport settings when component unmounts
-      if (meta && originalContent) {
-        meta.setAttribute('content', originalContent);
-      }
-    };
-  }, []);
-
   useEffect(() => {
     async function loadPages() {
       try {
