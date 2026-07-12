@@ -1080,24 +1080,46 @@ function ProjectContent() {
   if (!projectData || !id) return <div style={{ padding: '4rem', textAlign: 'center' }}>Project not found.</div>;
 
   return (
-    <div className="container fade-in" style={{ padding: 0, margin: 0, maxWidth: showManagement ? undefined : '100%' }}>
-      {showManagement ? (
+    <div className="container fade-in" style={{ padding: mode ? 0 : '2rem 1rem', margin: mode ? 0 : 'auto', maxWidth: mode ? '100%' : undefined }}>
+      {!mode || showManagement ? (
         <div className="flex-responsive" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--background)', padding: '1rem 0', marginBottom: '1rem', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
             <button 
-              onClick={() => router.back()}
+              onMouseDown={handlePressStart}
+              onTouchStart={handlePressStart}
+              onMouseUp={handlePressCancel}
+              onTouchEnd={handlePressCancel}
+              onMouseLeave={handlePressCancel}
+              onClick={() => {
+                if (!isLongPress.current) {
+                  if (showManagement) {
+                    router.back();
+                  } else {
+                    window.location.hash = 'management';
+                  }
+                }
+              }}
               className="glass-card" 
-              style={{ padding: '0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}
-              title="Management Settings"
+              style={{ padding: '0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: showManagement ? 'var(--primary)' : 'var(--foreground)' }}
+              title="Management Settings (Long press for Home)"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="8" y1="6" x2="21" y2="6" />
-                <line x1="8" y1="12" x2="21" y2="12" />
-                <line x1="8" y1="18" x2="21" y2="18" />
-                <line x1="3" y1="6" x2="3.01" y2="6" />
-                <line x1="3" y1="12" x2="3.01" y2="12" />
-                <line x1="3" y1="18" x2="3.01" y2="18" />
-              </svg>
+              {showManagement ? (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--foreground)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="4" width="7" height="7" rx="0.5" />
+                  <rect x="4" y="13" width="7" height="7" rx="0.5" />
+                  <rect x="13" y="13" width="7" height="7" rx="0.5" />
+                  <polygon points="16.5,4 20,7.5 16.5,11 13,7.5" />
+                </svg>
+              )}
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div>
@@ -1109,6 +1131,7 @@ function ProjectContent() {
         </div>
       ) : (
         <>
+          {/* Slim Auto-hiding Header for Study Mode */}
           <div style={{ 
             position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100, 
             background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)',
@@ -1131,6 +1154,7 @@ function ProjectContent() {
             </div>
           </div>
 
+          {/* Google Drive-like Floating Bottom Drawing Menu */}
           {headerAction && (
             <div style={{
               position: 'fixed', bottom: '2rem', left: '50%', transform: `translate(-50%, ${isUiVisible ? '0' : '150%'})`,
@@ -1143,7 +1167,7 @@ function ProjectContent() {
                 className="btn" 
                 style={{ padding: '0.6rem', borderRadius: '50%', background: activeDrawingTool === 'highlighter' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'highlighter' ? 'white' : 'var(--foreground)' }}
                 onClick={() => setActiveDrawingTool(activeDrawingTool === 'highlighter' ? null : 'highlighter')}
-                title="Highlighter"
+                title="Highlighter (Multiply Blend)"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l-4 4a2.828 2.828 0 0 0 4 4l4-4"></path><path d="M12 15l4-4-4-4-4 4z"></path><path d="M16 11l4-4a2.828 2.828 0 1 0-4-4l-4 4"></path></svg>
               </button>
