@@ -57,7 +57,7 @@ export default function DrawingOverlay({ pageId, baseImageUrl, initialDrawings =
       }
 
       if (stroke.tool === 'highlighter') {
-        ctx.globalCompositeOperation = 'source-over'; 
+        ctx.globalCompositeOperation = 'multiply'; 
         ctx.strokeStyle = 'rgba(255, 235, 59, 0.4)'; 
         ctx.lineWidth = 30;
       } else {

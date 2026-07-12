@@ -1072,26 +1072,17 @@ function ProjectContent() {
   if (!projectData || !id) return <div style={{ padding: '4rem', textAlign: 'center' }}>Project not found.</div>;
 
   return (
-    <div className="container fade-in" style={{ paddingTop: showManagement ? '2rem' : '0.5rem', paddingBottom: showManagement ? '3rem' : '0.5rem', maxWidth: showManagement ? undefined : '100%' }}>
-      <div className="flex-responsive" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--background)', padding: showManagement ? '1rem 0' : '0.2rem 0', marginBottom: showManagement ? '1rem' : '0.2rem', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
-          {mode ? (
+    <div className="container fade-in" style={{ padding: 0, margin: 0, maxWidth: showManagement ? undefined : '100%' }}>
+      {showManagement ? (
+        <div className="flex-responsive" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--background)', padding: '1rem 0', marginBottom: '1rem', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
             <button 
-              onClick={() => {
-                if (!isLongPress.current) {
-                  window.location.href = `/project?id=${id}`;
-                }
-              }}
-              onMouseDown={handlePressStart}
-              onTouchStart={handlePressStart}
-              onMouseUp={handlePressCancel}
-              onTouchEnd={handlePressCancel}
-              onMouseLeave={handlePressCancel}
+              onClick={() => router.back()}
               className="glass-card" 
-              style={{ padding: '0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground)' }}
-              title="Back to Reading List (Long press for Home)"
+              style={{ padding: '0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}
+              title="Management Settings"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="8" y1="6" x2="21" y2="6" />
                 <line x1="8" y1="12" x2="21" y2="12" />
                 <line x1="8" y1="18" x2="21" y2="18" />
@@ -1100,93 +1091,76 @@ function ProjectContent() {
                 <line x1="3" y1="18" x2="3.01" y2="18" />
               </svg>
             </button>
-          ) : (
-            <button 
-              onMouseDown={handlePressStart}
-              onTouchStart={handlePressStart}
-              onMouseUp={handlePressCancel}
-              onTouchEnd={handlePressCancel}
-              onMouseLeave={handlePressCancel}
-              onClick={() => {
-                if (!isLongPress.current) {
-                  if (showManagement) {
-                    router.back();
-                  } else {
-                    window.location.hash = 'management';
-                  }
-                }
-              }}
-              className="glass-card" 
-              style={{ padding: '0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: showManagement ? 'var(--primary)' : 'var(--foreground)' }}
-              title="Management Settings (Long press for Home)"
-            >
-              {showManagement ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="8" y1="6" x2="21" y2="6" />
-                  <line x1="8" y1="12" x2="21" y2="12" />
-                  <line x1="8" y1="18" x2="21" y2="18" />
-                  <line x1="3" y1="6" x2="3.01" y2="6" />
-                  <line x1="3" y1="12" x2="3.01" y2="12" />
-                  <line x1="3" y1="18" x2="3.01" y2="18" />
-                </svg>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--foreground)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="4" y="4" width="7" height="7" rx="0.5" />
-                  <rect x="4" y="13" width="7" height="7" rx="0.5" />
-                  <rect x="13" y="13" width="7" height="7" rx="0.5" />
-                  <polygon points="16.5,4 20,7.5 16.5,11 13,7.5" />
-                </svg>
-              )}
-            </button>
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div>
-              <h1 style={{ marginBottom: '0.2rem' }}>{projectData.name}</h1>
-              <span style={{ background: 'var(--surface-solid)', padding: '0.2rem 0.8rem', borderRadius: '1rem', fontSize: '0.8rem', border: '1px solid var(--surface-border)' }}>{projectData.category}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div>
+                <h1 style={{ marginBottom: '0.2rem' }}>{projectData.name}</h1>
+                <span style={{ background: 'var(--surface-solid)', padding: '0.2rem 0.8rem', borderRadius: '1rem', fontSize: '0.8rem', border: '1px solid var(--surface-border)' }}>{projectData.category}</span>
+              </div>
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      ) : (
+        <>
+          <div style={{ 
+            position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100, 
+            background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)',
+            padding: '0.5rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            transform: isUiVisible ? 'translateY(0)' : 'translateY(-100%)', transition: 'transform 0.3s',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button 
+                onClick={() => { window.location.href = `/project?id=${id}`; }}
+                className="btn" 
+                style={{ padding: '0.4rem', background: 'transparent' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              </button>
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{projectData.name}</h3>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {headerAction}
+            </div>
+          </div>
+
           {headerAction && (
-            <div ref={drawingMenuRef} style={{ position: 'relative' }}>
-              {!isDrawingMenuOpen ? (
-                <button 
-                  className="btn glass-card"
-                  style={{ padding: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--foreground)', cursor: 'pointer', height: '100%' }}
-                  onClick={() => setIsDrawingMenuOpen(true)}
-                  title="Drawing Tools"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                </button>
-              ) : (
-                <div className="fade-in" style={{ display: 'flex', background: 'var(--surface-solid)', padding: '0.2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)' }}>
-                  <button 
-                    className="btn" 
-                    style={{ padding: '0.3rem 0.5rem', background: activeDrawingTool === 'highlighter' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'highlighter' ? 'white' : 'var(--foreground)' }}
-                    onClick={() => setActiveDrawingTool(activeDrawingTool === 'highlighter' ? null : 'highlighter')}
-                    title="Highlighter"
-                  >🖌️</button>
-                  <button 
-                    className="btn" 
-                    style={{ padding: '0.3rem 0.5rem', background: activeDrawingTool === 'pen' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'pen' ? 'white' : 'var(--foreground)' }}
-                    onClick={() => setActiveDrawingTool(activeDrawingTool === 'pen' ? null : 'pen')}
-                    title="Pen"
-                  >🖊️</button>
-                  <button 
-                    className="btn" 
-                    style={{ padding: '0.3rem 0.5rem', background: activeDrawingTool === 'eraser' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'eraser' ? 'white' : 'var(--foreground)' }}
-                    onClick={() => setActiveDrawingTool(activeDrawingTool === 'eraser' ? null : 'eraser')}
-                    title="Smart Eraser"
-                  >🧽</button>
-                </div>
-              )}
+            <div style={{
+              position: 'fixed', bottom: '2rem', left: '50%', transform: `translate(-50%, ${isUiVisible ? '0' : '150%'})`,
+              transition: 'transform 0.3s', zIndex: 1100, display: 'flex', gap: '0.5rem',
+              background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)',
+              padding: '0.5rem', borderRadius: '2rem', boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+              border: '1px solid #ddd'
+            }}>
+              <button 
+                className="btn" 
+                style={{ padding: '0.6rem', borderRadius: '50%', background: activeDrawingTool === 'highlighter' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'highlighter' ? 'white' : 'var(--foreground)' }}
+                onClick={() => setActiveDrawingTool(activeDrawingTool === 'highlighter' ? null : 'highlighter')}
+                title="Highlighter"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l-4 4a2.828 2.828 0 0 0 4 4l4-4"></path><path d="M12 15l4-4-4-4-4 4z"></path><path d="M16 11l4-4a2.828 2.828 0 1 0-4-4l-4 4"></path></svg>
+              </button>
+              <button 
+                className="btn" 
+                style={{ padding: '0.6rem', borderRadius: '50%', background: activeDrawingTool === 'pen' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'pen' ? 'white' : 'var(--foreground)' }}
+                onClick={() => setActiveDrawingTool(activeDrawingTool === 'pen' ? null : 'pen')}
+                title="Pen"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>
+              </button>
+              <button 
+                className="btn" 
+                style={{ padding: '0.6rem', borderRadius: '50%', background: activeDrawingTool === 'eraser' ? 'var(--primary)' : 'transparent', color: activeDrawingTool === 'eraser' ? 'white' : 'var(--foreground)' }}
+                onClick={() => setActiveDrawingTool(activeDrawingTool === 'eraser' ? null : 'eraser')}
+                title="Smart Eraser"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>
+              </button>
             </div>
           )}
-          {headerAction}
-        </div>
-      </div>
+        </>
+      )}
 
-      <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
+      <div className="glass-card" style={{ padding: '0', overflow: 'hidden', border: showManagement ? undefined : 'none', background: showManagement ? undefined : 'transparent', boxShadow: showManagement ? undefined : 'none' }}>
         {showManagement ? (
           <div className="fade-in" style={{ minHeight: '400px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--surface-border)', paddingRight: '1rem' }}>

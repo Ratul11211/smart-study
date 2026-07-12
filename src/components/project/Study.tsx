@@ -1,7 +1,8 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc, query, where, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { collection, doc, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { PageData, ProjectData, ReadingData } from '@/types/project';
 import DrawingOverlay, { DrawingTool, Stroke } from '@/components/DrawingOverlay';
@@ -11,6 +12,15 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
   const [sessionActive, setSessionActive] = useState(false);
   const [donePages, setDonePages] = useState<number[]>([]);
   const [modifiedDrawings, setModifiedDrawings] = useState<Record<string, Stroke[]>>({});
+  
+  // Track scroll/zoom state
+  const [isUiVisible, setIsUiVisible] = useState(true);
+
+  // Inform parent to hide/show header
+  useEffect(() => {
+    const event = new CustomEvent('toggle-header', { detail: { visible: isUiVisible } });
+    document.dispatchEvent(event);
+  }, [isUiVisible]);
 
   const startPageNum = activeReading.leftOffPage || activeReading.startPage || 1;
   
@@ -227,53 +237,79 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
-      <div ref={containerRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem', background: '#f5f5f5', borderRadius: 'var(--radius-md)' }}>
-        {pages.map(p => {
-          const isPastDone = p.pageNum < startPageNum;
-          const isSessionDone = donePages.includes(p.pageNum);
-          const isDone = isPastDone || isSessionDone;
-          const canCheck = p.pageNum === startPageNum || donePages.includes(p.pageNum - 1);
-          
-          return (
-            <div key={p.id} id={`page-${p.pageNum}`} data-pagenum={p.pageNum} className="page-container" style={{ marginBottom: '2rem', background: 'white', borderRadius: 'var(--radius-md)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-              <div style={{ padding: '1rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 600 }}>Page {p.pageNum}</span>
-                {isPastDone ? (
-                  <span style={{ color: 'var(--primary)', fontWeight: 600 }}>✓ Read previously</span>
-                ) : (
-                  <button 
-                    disabled={!canCheck}
-                    onClick={() => toggleDone(p.pageNum)}
-                    style={{
-                      background: isDone ? 'var(--primary)' : 'transparent',
-                      color: isDone ? 'white' : (canCheck ? 'var(--foreground)' : '#ccc'),
-                      border: `2px solid ${isDone ? 'var(--primary)' : (canCheck ? 'var(--foreground)' : '#eee')}`,
-                      padding: '0.4rem 1rem', borderRadius: '2rem', cursor: canCheck ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.2s', fontWeight: 600
-                    }}
-                  >
-                    {isDone ? '✓ Done' : 'Mark Done'}
-                  </button>
-                )}
-              </div>
-              <DrawingOverlay 
-                pageId={p.id}
-                baseImageUrl={p.imageUrl} 
-                initialDrawings={p.drawings || []}
-                activeTool={activeDrawingTool}
-                onDrawingsChange={(pid, strokes) => setModifiedDrawings(prev => ({ ...prev, [pid]: strokes }))}
-                readOnly={!(canCheck && !isDone)}
-              />
-              {!canCheck && !isDone && (
-                <div style={{ padding: '1rem', textAlign: 'center', background: '#fff3cd', color: '#856404' }}>
-                  Please mark previous pages as done first.
-                </div>
-              )}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 1000, background: '#e0e0e0' }}>
+      
+      {/* Floating Page Indicator */}
+      <div style={{
+        position: 'absolute', top: '1rem', right: '1rem', zIndex: 1100,
+        background: 'rgba(0,0,0,0.6)', color: 'white', padding: '0.4rem 0.8rem',
+        borderRadius: '1rem', fontSize: '0.9rem', fontWeight: 600,
+        opacity: isUiVisible ? 1 : 0.4, transition: 'opacity 0.3s', pointerEvents: 'none'
+      }}>
+        Page {currentPage} {projectData.maxUnlockedPage ? `/ ${projectData.maxUnlockedPage - 1}` : ''}
+      </div>
+
+      <div ref={containerRef} style={{ flex: 1, width: '100%', height: '100%', background: '#f5f5f5' }} onClick={() => setIsUiVisible(!isUiVisible)}>
+        <TransformWrapper
+          initialScale={1}
+          minScale={0.5}
+          maxScale={4}
+          wheel={{ step: 0.1 }}
+          panning={{ velocityDisabled: true }}
+          doubleClick={{ disabled: true }}
+        >
+          <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', padding: '1rem 0' }}>
+              {pages.map(p => {
+                const isPastDone = p.pageNum < startPageNum;
+                const isSessionDone = donePages.includes(p.pageNum);
+                const isDone = isPastDone || isSessionDone;
+                const canCheck = p.pageNum === startPageNum || donePages.includes(p.pageNum - 1);
+                
+                return (
+                  <div key={p.id} id={`page-${p.pageNum}`} data-pagenum={p.pageNum} className="page-container" style={{ margin: '0 auto 1rem auto', width: '100%', maxWidth: '800px', background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                    {isUiVisible && (
+                      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#555' }}>Page {p.pageNum}</span>
+                        {isPastDone ? (
+                          <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem' }}>Read previously</span>
+                        ) : (
+                          <button 
+                            disabled={!canCheck}
+                            onClick={(e) => { e.stopPropagation(); toggleDone(p.pageNum); }}
+                            style={{
+                              background: isDone ? 'var(--primary)' : 'transparent',
+                              color: isDone ? 'white' : (canCheck ? 'var(--foreground)' : '#ccc'),
+                              border: `2px solid ${isDone ? 'var(--primary)' : (canCheck ? 'var(--foreground)' : '#eee')}`,
+                              padding: '0.2rem 0.8rem', borderRadius: '1rem', cursor: canCheck ? 'pointer' : 'not-allowed',
+                              transition: 'all 0.2s', fontWeight: 600, fontSize: '0.8rem'
+                            }}
+                          >
+                            {isDone ? 'Done' : 'Mark Done'}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    <DrawingOverlay 
+                      pageId={p.id}
+                      baseImageUrl={p.imageUrl} 
+                      initialDrawings={p.drawings || []}
+                      activeTool={activeDrawingTool}
+                      onDrawingsChange={(pid, strokes) => setModifiedDrawings(prev => ({ ...prev, [pid]: strokes }))}
+                      readOnly={!(canCheck && !isDone)}
+                    />
+                    {!canCheck && !isDone && isUiVisible && (
+                      <div style={{ padding: '0.5rem', textAlign: 'center', background: '#fff3cd', color: '#856404', fontSize: '0.85rem' }}>
+                        Mark previous pages as done first.
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {loadingPages && <div style={{ padding: '2rem', width: '100%', textAlign: 'center', opacity: 0.7 }}>Loading pages...</div>}
             </div>
-          );
-        })}
-        {loadingPages && <div style={{ padding: '2rem', width: '100%', textAlign: 'center', opacity: 0.7 }}>Loading pages...</div>}
+          </TransformComponent>
+        </TransformWrapper>
       </div>
     </div>
   );
