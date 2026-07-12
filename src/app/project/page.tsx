@@ -5,12 +5,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { getProjectById, saveProject, getPages, savePageWithImage, loadPageImage, updatePageNum, deletePage, updatePageDrawings, generateId } from '@/lib/localDB';
 import Study from '@/components/project/Study';
 import dynamic from 'next/dynamic';
-import type { DrawingTool, Stroke } from '@/components/DrawingOverlay';
 import { ProjectData, PageData, ReadingData } from '@/types/project';
 import { useAuth } from '@/hooks/useAuth';
 import BackupMenu from '@/components/BackupMenu';
 
-const DrawingOverlay = dynamic(() => import('@/components/DrawingOverlay'), { ssr: false });
 
 const UploadScans = ({ projectId, pages, onUploadComplete }: { projectId: string, pages: PageData[], onUploadComplete: ()=>void }) => {
   const [extractedPages, setExtractedPages] = useState<PageData[]>([]);
@@ -205,7 +203,7 @@ const UploadScans = ({ projectId, pages, onUploadComplete }: { projectId: string
 
 
 
-const ActiveRevisionView = ({ projectId, projectData, groupName, groupTasks, onUpdate, setHeaderAction, activeDrawingTool }: { projectId: string, projectData: ProjectData, groupName: string, groupTasks: any[], onUpdate: ()=>void, setHeaderAction: (node: React.ReactNode | null) => void, activeDrawingTool: DrawingTool }) => {
+const ActiveRevisionView = ({ projectId, projectData, groupName, groupTasks, onUpdate, setHeaderAction, activeDrawingTool }: { projectId: string, projectData: ProjectData, groupName: string, groupTasks: any[], onUpdate: ()=>void, setHeaderAction: (node: React.ReactNode | null) => void }) => {
   const router = useRouter();
   const [modifiedDrawings, setModifiedDrawings] = useState<Record<string, Stroke[]>>({});
   const sortedTasks = [...groupTasks].sort((a,b) => a.page - b.page);
@@ -291,7 +289,7 @@ const ActiveRevisionView = ({ projectId, projectData, groupName, groupTasks, onU
   );
 }
 
-const RevisionView = ({ projectId, projectData, onUpdate, activeReading, setHeaderAction, activeDrawingTool }: { projectId: string, projectData: ProjectData, onUpdate: ()=>void, activeReading: ReadingData, setHeaderAction: (node: React.ReactNode | null) => void, activeDrawingTool: DrawingTool }) => {
+const RevisionView = ({ projectId, projectData, onUpdate, activeReading, setHeaderAction, activeDrawingTool }: { projectId: string, projectData: ProjectData, onUpdate: ()=>void, activeReading: ReadingData, setHeaderAction: (node: React.ReactNode | null) => void }) => {
   const router = useRouter();
     const searchParams = useSearchParams();
   const activeGroup = searchParams.get('group');
@@ -323,7 +321,7 @@ const RevisionView = ({ projectId, projectData, onUpdate, activeReading, setHead
       groupTasks={groupedTasks[activeGroup]} 
       onUpdate={onUpdate} 
       setHeaderAction={setHeaderAction}
-      activeDrawingTool={activeDrawingTool}
+     
     />;
   }
 
@@ -635,18 +633,18 @@ const ReadingSetup = ({ projectId, currentReadings }: { projectId: string, curre
 
 
 
-const StudyTab = ({ projectId, projectData, onUpdate, setHeaderAction, activeDrawingTool, mode, readingTitle }: { projectId: string, projectData: ProjectData, onUpdate: ()=>void, setHeaderAction: (node: React.ReactNode | null) => void, activeDrawingTool: DrawingTool, mode: string | null, readingTitle: string | null }) => {
+const StudyTab = ({ projectId, projectData, onUpdate, setHeaderAction, activeDrawingTool, mode, readingTitle }: { projectId: string, projectData: ProjectData, onUpdate: ()=>void, setHeaderAction: (node: React.ReactNode | null) => void, mode: string | null, readingTitle: string | null }) => {
   const router = useRouter();
 
   const readings = projectData.readings || [];
   const activeReading = readings.find(r => r.title === readingTitle) || null;
 
   if (activeReading && mode === 'reading') {
-    return <Study projectId={projectId} projectData={projectData} onUpdate={onUpdate} activeReading={activeReading} setHeaderAction={setHeaderAction} activeDrawingTool={activeDrawingTool} />;
+    return <Study projectId={projectId} projectData={projectData} onUpdate={onUpdate} activeReading={activeReading} setHeaderAction={setHeaderAction} />;
   }
 
   if (activeReading && mode === 'revision') {
-    return <RevisionView projectId={projectId} projectData={projectData} onUpdate={onUpdate} activeReading={activeReading} setHeaderAction={setHeaderAction} activeDrawingTool={activeDrawingTool} />;
+    return <RevisionView projectId={projectId} projectData={projectData} onUpdate={onUpdate} activeReading={activeReading} setHeaderAction={setHeaderAction} />;
   }
 
   return (
@@ -691,10 +689,8 @@ function ProjectContent() {
     return () => document.removeEventListener('toggle-header', handleToggle);
   }, []);
 
-  const [isDrawingMenuOpen, setIsDrawingMenuOpen] = useState(false);
-  const [managementTab, setManagementTab] = useState('Reading');
-  const drawingMenuRef = useRef<HTMLDivElement>(null);
-  const isLongPress = useRef(false);
+    const [managementTab, setManagementTab] = useState('Reading');
+    const isLongPress = useRef(false);
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
@@ -976,7 +972,7 @@ function ProjectContent() {
           </div>
         ) : (
           <div style={{ minHeight: '400px' }}>
-            <StudyTab projectId={id} projectData={projectData} onUpdate={fetchData} setHeaderAction={setHeaderAction} activeDrawingTool={activeDrawingTool} mode={mode} readingTitle={searchParams.get('reading')} />
+            <StudyTab projectId={id} projectData={projectData} onUpdate={fetchData} setHeaderAction={setHeaderAction} mode={mode} readingTitle={searchParams.get('reading')} />
           </div>
         )}
       </div>
