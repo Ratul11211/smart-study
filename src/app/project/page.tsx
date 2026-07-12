@@ -675,6 +675,10 @@ const StudyTab = ({ projectId, projectData, onUpdate, setHeaderAction, activeDra
 };
 
 function ProjectContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id');
+  const mode = searchParams.get('mode');
+
   const [showManagement, setShowManagement] = useState(false);
   const [headerAction, setHeaderAction] = useState<React.ReactNode | null>(null);
   const [activeDrawingTool, setActiveDrawingTool] = useState<DrawingTool | null>(null);
@@ -725,10 +729,6 @@ function ProjectContent() {
     }
   };
 
-
-  const searchParams = useSearchParams();
-  const id = searchParams.get('id');
-  const mode = searchParams.get('mode');
 
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [pages, setPages] = useState<PageData[]>([]);
