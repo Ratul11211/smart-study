@@ -238,7 +238,7 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 1000, background: '#e0e0e0' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, background: '#e0e2e5' }}>
       
       {/* Floating Page Indicator */}
       <div style={{
@@ -250,15 +250,15 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
         Page {currentPage} {projectData.maxUnlockedPage ? `/ ${projectData.maxUnlockedPage - 1}` : ''}
       </div>
 
-      <div ref={containerRef} style={{ flex: 1, width: '100%', height: '100%', background: '#111', overflowY: 'auto', overflowX: 'hidden' }} onClick={() => setIsUiVisible(!isUiVisible)}>
-        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center', padding: '1rem 0' }}>
+      <div ref={containerRef} style={{ flex: 1, width: '100%', height: '100%', background: '#e0e2e5', overflowY: 'auto', overflowX: 'hidden' }} onClick={() => setIsUiVisible(!isUiVisible)}>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center' }}>
           {pages.map(p => {
             const isPastDone = p.pageNum < startPageNum;
             const isSessionDone = donePages.includes(p.pageNum);
             const isDone = isPastDone || isSessionDone;
             const canCheck = p.pageNum === startPageNum || donePages.includes(p.pageNum - 1);
             return (
-              <div key={p.id} id={`page-${p.pageNum}`} data-pagenum={p.pageNum} className="page-container" style={{ margin: '0 0 1rem 0', width: '100%', background: 'white', position: 'relative' }}>
+              <div key={p.id} id={`page-${p.pageNum}`} data-pagenum={p.pageNum} className="page-container" style={{ margin: '0 0 4px 0', width: '100%', background: 'white', position: 'relative' }}>
                 <QuickPinchZoom 
                   onUpdate={({x,y,scale}) => {
                     const el = document.getElementById(`zoom-wrap-${p.id}`);
