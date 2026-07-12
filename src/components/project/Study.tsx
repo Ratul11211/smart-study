@@ -1,9 +1,8 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { PageData, ProjectData } from '@/types/project';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import { getPages, loadPageImage } from '@/lib/localDB';
 
 interface StudyProps {
   projectData?: ProjectData;
@@ -18,10 +17,10 @@ export default function Study({ projectId, ...props }: StudyProps) {
   useEffect(() => {
     async function loadPages() {
       try {
-        const q = query(collection(db, 'projects', projectId, 'pages'), orderBy('pageNum', 'asc'));
-        const snap = await getDocs(q);
-        const loaded = snap.docs.map(d => ({ id: d.id, ...d.data() } as PageData));
-        setPages(loaded);
+        const allPages = await getPages(projectId);
+        const sorted = allPages.sort((a, b) => a.pageNum - b.pageNum);
+        const loadedPages = await Promise.all(sorted.map(p => loadPageImage(p)));
+        setPages(loadedPages);
       } catch (err) {
         console.error("Error loading pages", err);
       } finally {
