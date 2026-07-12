@@ -250,24 +250,15 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
         Page {currentPage} {projectData.maxUnlockedPage ? `/ ${projectData.maxUnlockedPage - 1}` : ''}
       </div>
 
-      <div ref={containerRef} style={{ flex: 1, width: '100%', height: '100%', background: '#f5f5f5' }} onClick={() => setIsUiVisible(!isUiVisible)}>
-        <TransformWrapper
-          initialScale={1}
-          minScale={0.5}
-          maxScale={4}
-          wheel={{ step: 0.1 }}
-          panning={{ velocityDisabled: true }}
-          doubleClick={{ disabled: true }}
-        >
-          <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', padding: '1rem 0' }}>
-              {pages.map(p => {
-                const isPastDone = p.pageNum < startPageNum;
-                const isSessionDone = donePages.includes(p.pageNum);
-                const isDone = isPastDone || isSessionDone;
-                const canCheck = p.pageNum === startPageNum || donePages.includes(p.pageNum - 1);
-                              return (
-                    <div key={p.id} id={`page-${p.pageNum}`} data-pagenum={p.pageNum} className="page-container" style={{ margin: '0 auto 1rem auto', width: '100%', maxWidth: '800px', background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', position: 'relative' }}>
+      <div ref={containerRef} style={{ flex: 1, width: '100%', height: '100%', background: '#111', overflowY: 'auto', overflowX: 'hidden' }} onClick={() => setIsUiVisible(!isUiVisible)}>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center', padding: '1rem 0' }}>
+          {pages.map(p => {
+            const isPastDone = p.pageNum < startPageNum;
+            const isSessionDone = donePages.includes(p.pageNum);
+            const isDone = isPastDone || isSessionDone;
+            const canCheck = p.pageNum === startPageNum || donePages.includes(p.pageNum - 1);
+            return (
+              <div key={p.id} id={`page-${p.pageNum}`} data-pagenum={p.pageNum} className="page-container" style={{ margin: '0 0 1rem 0', width: '100%', background: 'white', position: 'relative' }}>
                       <DrawingOverlay 
                         pageId={p.id}
                         baseImageUrl={p.imageUrl} 
@@ -319,11 +310,9 @@ const Study = ({ projectId, projectData, onUpdate, activeReading, setHeaderActio
               })}
               {loadingPages && <div style={{ padding: '2rem', width: '100%', textAlign: 'center', opacity: 0.7 }}>Loading pages...</div>}
             </div>
-          </TransformComponent>
-        </TransformWrapper>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 export default Study;
