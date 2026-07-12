@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+
 import { collection, doc, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { PageData, ProjectData, ReadingData } from '@/types/project';
