@@ -49,6 +49,9 @@ export default function Study({ projectId, ...props }: StudyProps) {
         wheel={{ step: 0.1 }}
         doubleClick={{ disabled: false }}
         panning={{ disabled: !isZoomed }}
+        centerZoomedOut={false}
+        limitToBounds={false}
+
         onTransform={(ref) => setIsZoomed(ref.state.scale > 1.05)}
       >
         {() => (
