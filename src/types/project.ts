@@ -1,4 +1,10 @@
-import type { Stroke } from '@/components/DrawingOverlay';
+// Stroke type for drawing annotations on pages
+export interface Stroke {
+  tool: 'pen' | 'highlighter' | 'eraser';
+  color: string;
+  width: number;
+  points: { x: number; y: number }[];
+}
 
 export interface PageData { 
   id: string; 

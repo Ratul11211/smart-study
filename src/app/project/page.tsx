@@ -280,7 +280,7 @@ const ActiveRevisionView = ({ projectId, projectData, groupName, groupTasks, onU
   );
 }
 
-const RevisionView = ({ projectId, projectData, onUpdate, activeReading, setHeaderAction, activeDrawingTool }: { projectId: string, projectData: ProjectData, onUpdate: ()=>void, activeReading: ReadingData, setHeaderAction: (node: React.ReactNode | null) => void }) => {
+const RevisionView = ({ projectId, projectData, onUpdate, activeReading, setHeaderAction }: { projectId: string, projectData: ProjectData, onUpdate: ()=>void, activeReading: ReadingData, setHeaderAction: (node: React.ReactNode | null) => void }) => {
   const router = useRouter();
     const searchParams = useSearchParams();
   const activeGroup = searchParams.get('group');
@@ -624,7 +624,7 @@ const ReadingSetup = ({ projectId, currentReadings }: { projectId: string, curre
 
 
 
-const StudyTab = ({ projectId, projectData, onUpdate, setHeaderAction, activeDrawingTool, mode, readingTitle }: { projectId: string, projectData: ProjectData, onUpdate: ()=>void, setHeaderAction: (node: React.ReactNode | null) => void, mode: string | null, readingTitle: string | null }) => {
+const StudyTab = ({ projectId, projectData, onUpdate, setHeaderAction, mode, readingTitle }: { projectId: string, projectData: ProjectData, onUpdate: ()=>void, setHeaderAction: (node: React.ReactNode | null) => void, mode: string | null, readingTitle: string | null }) => {
   const router = useRouter();
 
   const readings = projectData.readings || [];
@@ -670,7 +670,10 @@ function ProjectContent() {
 
   const [showManagement, setShowManagement] = useState(false);
   const [headerAction, setHeaderAction] = useState<React.ReactNode | null>(null);
+  type DrawingTool = 'pen' | 'highlighter' | 'eraser';
   const [activeDrawingTool, setActiveDrawingTool] = useState<DrawingTool | null>(null);
+  const [isDrawingMenuOpen, setIsDrawingMenuOpen] = useState(false);
+  const drawingMenuRef = useRef<HTMLDivElement | null>(null);
   
   const [isUiVisible, setIsUiVisible] = useState(true);
 
