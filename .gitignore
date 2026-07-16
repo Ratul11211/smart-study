@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android platform-tools (ADB binaries - should not be committed)
+/platform-tools/
+platform-tools.zip
+
+# Log and temp files
+*.log
+job_log.txt
+jobs.json
+runs.json
+
+# Media files
+*.mp4
+*.mov
+*.avi
